@@ -119,6 +119,32 @@ CREATE TABLE IF NOT EXISTS rooms (
 );
 ```
 
+#### Create `room_amenities` table
+
+```sql
+CREATE TABLE IF NOT EXISTS room_amenities (
+    hotel_id INTEGER,
+    room_number TEXT,
+    tv BOOLEAN,
+    air_condition BOOLEAN,
+    fridge BOOLEAN,
+    PRIMARY KEY (hotel_id, room_number),
+    FOREIGN KEY (hotel_id, room_number) REFERENCES rooms (hotel_id, room_number)
+);
+```
+
+#### Create `room_damages` table
+
+```sql
+CREATE TABLE IF NOT EXISTS room_damages (
+    hotel_id INTEGER,
+    room_number TEXT,
+    description TEXT NOT NULL,
+    PRIMARY KEY (hotel_id, room_number, description),
+    FOREIGN KEY (hotel_id, room_number) REFERENCES rooms (hotel_id, room_number)
+);
+```
+
 #### Create `employees` table
 
 ```sql
@@ -751,32 +777,6 @@ INSERT INTO rooms (hotel_id, room_number, capacity, price, view_type, extensible
     (40, '502', 5, 1011.12, 2, true),
     (40, '601', 6, 1112.13, 1, false),
     (40, '602', 6, 1213.14, 2, true);
-```
-
-#### Create `room_amenities` table
-
-```sql
-CREATE TABLE IF NOT EXISTS room_amenities (
-    hotel_id INTEGER,
-    room_number TEXT,
-    tv BOOLEAN,
-    air_condition BOOLEAN,
-    fridge BOOLEAN,
-    PRIMARY KEY (hotel_id, room_number),
-    FOREIGN KEY (hotel_id, room_number) REFERENCES rooms (hotel_id, room_number)
-);
-```
-
-#### Create `room_damages` table
-
-```sql
-CREATE TABLE IF NOT EXISTS room_damages (
-    hotel_id INTEGER,
-    room_number TEXT,
-    description TEXT NOT NULL,
-    PRIMARY KEY (hotel_id, room_number, description),
-    FOREIGN KEY (hotel_id, room_number) REFERENCES rooms (hotel_id, room_number)
-);
 ```
 
 #### num_hotels trigger
