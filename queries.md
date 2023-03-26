@@ -145,6 +145,52 @@ CREATE TABLE IF NOT EXISTS room_damages (
 );
 ```
 
+#### num_hotels trigger
+
+```sql
+CREATE OR REPLACE FUNCTION num_hotels() RETURNS TRIGGER AS $num_hotels$
+    BEGIN
+        UPDATE chains
+        SET num_hotels = sub.num_hotels
+        FROM (
+            SELECT chain_id, COUNT(*) AS num_hotels
+            FROM hotels
+            GROUP BY chain_id
+        ) AS sub
+        WHERE chains.chain_id = sub.chain_id;
+        RETURN NEW;
+    END;
+$num_hotels$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trig_num_hotels
+    AFTER INSERT OR DELETE ON hotels
+    FOR EACH ROW
+    EXECUTE PROCEDURE num_hotels();
+```
+
+#### num_rooms trigger
+
+```sql
+CREATE OR REPLACE FUNCTION num_rooms() RETURNS TRIGGER AS $num_rooms$
+    BEGIN
+        UPDATE hotels
+        SET num_rooms = sub.num_rooms
+        FROM (
+            SELECT hotel_id, COUNT(*) AS num_rooms
+            FROM rooms
+            GROUP BY hotel_id
+        ) AS sub
+        WHERE hotels.hotel_id = sub.hotel_id;
+        RETURN NEW;
+    END;
+$num_rooms$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trig_num_rooms
+    AFTER INSERT OR DELETE ON rooms
+    FOR EACH ROW
+    EXECUTE PROCEDURE num_rooms();
+```
+
 #### Create `positions` table
 
 ```sql
@@ -205,7 +251,7 @@ CREATE TABLE IF NOT EXISTS customers (
 );
 ```
 
-### Install uuid module
+#### Install uuid module
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -398,7 +444,7 @@ INSERT INTO rooms (hotel_id, room_number, capacity, price, view_type, extensible
     (7, '501', 5, 901.23, 1, false),
     (7, '502', 5, 1011.12, 2, true),
     (7, '601', 6, 1112.13, 1, false),
-    (7, '602', 6, 1213.14, 2, true),
+    (7, '602', 6, 1213.14FOREIGN KEY (hotel_id) REFERENCES hotels(hotel_id), 2, true),
     (8, '101', 1, 123.45, 1, false),
     (8, '102', 1, 234.56, 2, true),
     (8, '201', 2, 345.67, 1, false),
@@ -797,48 +843,13 @@ INSERT INTO rooms (hotel_id, room_number, capacity, price, view_type, extensible
     (40, '602', 6, 1213.14, 2, true);
 ```
 
-#### num_hotels trigger
+#### Insert into `positions` table
 
 ```sql
-CREATE OR REPLACE FUNCTION num_hotels() RETURNS TRIGGER AS $num_hotels$
-    BEGIN
-        UPDATE chains
-        SET num_hotels = sub.num_hotels
-        FROM (
-            SELECT chain_id, COUNT(*) AS num_hotels
-            FROM hotels
-            GROUP BY chain_id
-        ) AS sub
-        WHERE chains.chain_id = sub.chain_id;
-        RETURN NEW;
-    END;
-$num_hotels$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE TRIGGER trig_num_hotels
-    AFTER INSERT OR DELETE ON hotels
-    FOR EACH ROW
-    EXECUTE PROCEDURE num_hotels();
-```
-
-#### num_rooms trigger
-
-```sql
-CREATE OR REPLACE FUNCTION num_rooms() RETURNS TRIGGER AS $num_rooms$
-    BEGIN
-        UPDATE hotels
-        SET num_rooms = sub.num_rooms
-        FROM (
-            SELECT hotel_id, COUNT(*) AS num_rooms
-            FROM rooms
-            GROUP BY hotel_id
-        ) AS sub
-        WHERE hotels.hotel_id = sub.hotel_id;
-        RETURN NEW;
-    END;
-$num_rooms$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE TRIGGER trig_num_rooms
-    AFTER INSERT OR DELETE ON rooms
-    FOR EACH ROW
-    EXECUTE PROCEDURE num_rooms();
+INSERT INTO positions (position_name) VALUES
+    ('manager'),
+    ('receptionist'),
+    ('housekeeper'),
+    ('maintenance technician'),
+    ('cook');
 ```
