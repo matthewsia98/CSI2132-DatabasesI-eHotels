@@ -299,7 +299,7 @@ INSERT INTO chains(chain_name) VALUES
 INSERT INTO chain_offices (chain_id, street_number, street_name, apt_number, city, province_or_state, country, zip) VALUES
     (1, '1234', 'Angler Avenue', '2605', 'Ottawa', 'Ontario', 'Canada', 'K1R0C3'),
     (2, '2345', 'Barhaven Route', '813', 'Houston', 'Texas', 'United States', '77002'),
-    (3, '3456', 'Christmas Lane', null, 'Toronto', 'Ontario', Canada', 'K1G5F3'),
+    (3, '3456', 'Christmas Lane', null, 'Toronto', 'Ontario', 'Canada', 'K1G5F3'),
     (4, '4567', 'Dunst Street', null, 'Miami', 'Florida', 'United States, '33102'),
     (5, '5678', 'Elgin Lane', '1205', 'Seattle', 'Washington', 'United States', '98102');
 ```
@@ -962,7 +962,8 @@ INSERT INTO rooms (hotel_id, room_number, capacity, price, view_type, extensible
 
 ```sql
 INSERT INTO room_damages (hotel_id, room_number, description) VALUES
-    (1, '101', ''),
+    (1, '101', 'hole in wall'),
+    (1, '102', 'bathroom sink not working'),
 ```
 
 #### Insert into `positions` table
