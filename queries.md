@@ -145,6 +145,15 @@ CREATE TABLE IF NOT EXISTS room_damages (
 );
 ```
 
+#### Create `positions` table
+
+```sql
+CREATE TABLE IF NOT EXISTS positions (
+    position_id SERIAL PRIMARY KEY,
+    position_name TEXT NOT NULL,
+)
+```
+
 #### Create `employees` table
 
 ```sql
@@ -161,10 +170,19 @@ CREATE TABLE IF NOT EXISTS employees (
     province_or_state TEXT,
     country TEXT NOT NULL,
     zip TEXT NOT NULL,
-    POSITION TEXT NOT NULL,
+    position_id INTEGER,
     hotel_id INTEGER,
+    FOREIGN KEY (position_id) REFERENCES positions(position_id)
     FOREIGN KEY (hotel_id) REFERENCES hotels(hotel_id)
 );
+```
+
+#### Add `manager_id` column to `hotels` table
+
+```sql
+ALTER TABLE hotels
+ADD COLUMN manager_id INTEGER
+FOREIGN KEY (manager_id) REFERENCES employees(employee_id)
 ```
 
 #### Create `customers` table
