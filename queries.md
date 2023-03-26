@@ -444,7 +444,7 @@ INSERT INTO rooms (hotel_id, room_number, capacity, price, view_type, extensible
     (7, '501', 5, 901.23, 1, false),
     (7, '502', 5, 1011.12, 2, true),
     (7, '601', 6, 1112.13, 1, false),
-    (7, '602', 6, 1213.14FOREIGN KEY (hotel_id) REFERENCES hotels(hotel_id), 2, true),
+    (7, '602', 6, 1213.14, 2, true),
     (8, '101', 1, 123.45, 1, false),
     (8, '102', 1, 234.56, 2, true),
     (8, '201', 2, 345.67, 1, false),
