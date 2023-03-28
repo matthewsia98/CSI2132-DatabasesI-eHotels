@@ -3,8 +3,8 @@
 ```sql
 CREATE TABLE IF NOT EXISTS chains (
     chain_id SERIAL PRIMARY KEY,
-    chain_name TEXT NOT NULL
-    num_hotels INTEGER,
+    chain_name TEXT NOT NULL,
+    num_hotels INTEGER DEFAULT 0
 );
 ```
 
@@ -35,7 +35,6 @@ CREATE TABLE IF NOT EXISTS chain_phone_numbers (
     chain_id INTEGER NOT NULL,
     FOREIGN KEY(chain_id) REFERENCES chains(chain_id) ON DELETE CASCADE
 );
-
 ```
 
 #### Create `chain_email_addresses` table
@@ -135,59 +134,13 @@ CREATE TABLE IF NOT EXISTS room_damages (
 );
 ```
 
-#### num_hotels trigger
-
-```sql
-CREATE OR REPLACE FUNCTION num_hotels() RETURNS TRIGGER AS $num_hotels$
-    BEGIN
-        UPDATE chains
-        SET num_hotels = sub.num_hotels
-        FROM (
-            SELECT chain_id, COUNT(*) AS num_hotels
-            FROM hotels
-            GROUP BY chain_id
-        ) AS sub
-        WHERE chains.chain_id = sub.chain_id;
-        RETURN NEW;
-    END;
-$num_hotels$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE TRIGGER trig_num_hotels
-    AFTER INSERT OR DELETE ON hotels
-    FOR EACH ROW
-    EXECUTE PROCEDURE num_hotels();
-```
-
-#### num_rooms trigger
-
-```sql
-CREATE OR REPLACE FUNCTION num_rooms() RETURNS TRIGGER AS $num_rooms$
-    BEGIN
-        UPDATE hotels
-        SET num_rooms = sub.num_rooms
-        FROM (
-            SELECT hotel_id, COUNT(*) AS num_rooms
-            FROM rooms
-            GROUP BY hotel_id
-        ) AS sub
-        WHERE hotels.hotel_id = sub.hotel_id;
-        RETURN NEW;
-    END;
-$num_rooms$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE TRIGGER trig_num_rooms
-    AFTER INSERT OR DELETE ON rooms
-    FOR EACH ROW
-    EXECUTE PROCEDURE num_rooms();
-```
-
 #### Create `positions` table
 
 ```sql
 CREATE TABLE IF NOT EXISTS positions (
     position_id SERIAL PRIMARY KEY,
-    position_name TEXT NOT NULL,
-)
+    position_name TEXT NOT NULL
+);
 ```
 
 #### Create `employees` table
@@ -208,17 +161,20 @@ CREATE TABLE IF NOT EXISTS employees (
     zip TEXT NOT NULL,
     position_id INTEGER,
     hotel_id INTEGER,
-    FOREIGN KEY (position_id) REFERENCES positions(position_id)
+    FOREIGN KEY (position_id) REFERENCES positions(position_id),
     FOREIGN KEY (hotel_id) REFERENCES hotels(hotel_id)
 );
 ```
 
-#### Add `manager_id` column to `hotels` table
+#### Create `hotel_managers` table
 
 ```sql
-ALTER TABLE hotels
-ADD COLUMN manager_id INTEGER
-FOREIGN KEY (manager_id) REFERENCES employees(employee_id)
+CREATE TABLE IF NOT EXISTS hotel_managers (
+    hotel_id INTEGER NOT NULL,
+    manager_id INTEGER NOT NULL,
+    FOREIGN KEY (hotel_id) REFERENCES hotels (hotel_id),
+    FOREIGN KEY (manager_id) REFERENCES employees (employee_id)
+);
 ```
 
 #### Create `customers` table
@@ -280,6 +236,87 @@ CREATE TABLE IF NOT EXISTS rentals (
     FOREIGN KEY (booking_id) REFERENCES bookings (booking_id),
     FOREIGN KEY (hotel_id, room_number) REFERENCES rooms (hotel_id, room_number)
 );
+```
+
+#### num_hotels trigger
+
+```sql
+CREATE OR REPLACE FUNCTION num_hotels() RETURNS TRIGGER AS $num_hotels$
+    BEGIN
+        UPDATE chains
+        SET num_hotels = sub.num_hotels
+        FROM (
+            SELECT chain_id, COUNT(*) AS num_hotels
+            FROM hotels
+            GROUP BY chain_id
+        ) AS sub
+        WHERE chains.chain_id = sub.chain_id;
+        RETURN NEW;
+    END;
+$num_hotels$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trig_num_hotels
+    AFTER INSERT OR DELETE ON hotels
+    FOR EACH ROW
+    EXECUTE PROCEDURE num_hotels();
+```
+
+#### num_rooms trigger
+
+```sql
+CREATE OR REPLACE FUNCTION num_rooms() RETURNS TRIGGER AS $num_rooms$
+    BEGIN
+        UPDATE hotels
+        SET num_rooms = sub.num_rooms
+        FROM (
+            SELECT hotel_id, COUNT(*) AS num_rooms
+            FROM rooms
+            GROUP BY hotel_id
+        ) AS sub
+        WHERE hotels.hotel_id = sub.hotel_id;
+        RETURN NEW;
+    END;
+$num_rooms$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trig_num_rooms
+    AFTER INSERT OR DELETE ON rooms
+    FOR EACH ROW
+    EXECUTE PROCEDURE num_rooms();
+```
+
+#### check_delete_manager trigger
+
+```sql
+CREATE OR REPLACE FUNCTION check_delete_manager() RETURNS TRIGGER as $check_delete_manager$
+    DECLARE
+        manager_position_id int;
+        num_managers int;
+    BEGIN
+        SELECT position_id INTO manager_position_id
+        FROM positions
+        WHERE position_name = 'manager';
+
+        IF OLD.position_id != manager_position_id THEN
+            RETURN NULL;
+        ELSE
+            SELECT COUNT(*) INTO num_managers
+            FROM employees
+            WHERE employees.hotel_id = OLD.hotel_id
+                AND employees.position_id = manager_position_id;
+
+            IF num_managers > 1 THEN
+                RETURN NULL;
+            ELSE
+                RAISE EXCEPTION 'Cannot delete last manager for hotel';
+            END IF;
+        END IF;
+    END;
+$check_delete_manager$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trig_check_delete_manager
+    BEFORE DELETE ON employees
+    FOR EACH ROW
+    EXECUTE PROCEDURE check_delete_manager();
 ```
 
 #### Insert into `chains` table
@@ -975,6 +1012,52 @@ INSERT INTO positions (position_name) VALUES
     ('housekeeper'),
     ('maintenance technician'),
     ('cook');
+```
+
+#### Insert into `employees` table
+
+```sql
+INSERT INTO employees (ssn, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province_or_state, country, zip, position_id, hotel_id) VALUES
+    ('414149791', 'Caelestis', null, 'Iriney', '567', 'Lees Avenue', '888', 'Ottawa', 'Ontario', 'Canada', 'K1JBE9', 1, 2),
+    ('404037198', 'Arnoldas', 'I', 'Sulejman', '12', 'Lawn Way', '2', 'Toronto', 'Ontario', 'Canada', 'K1G5E9', 1, 1),
+    ('269884650', 'Khasan', null, 'Suman', '234', 'Patrick Avenue', '6', 'Houston', 'Texas', 'United States', '78006', 1, 3),
+    ('325809765', 'Sophocles', null, 'Léandre', '56', 'Airway Street', '9', 'San Antonio', 'Texas', 'United States', '78008', 1, 4),
+    ('357315340', 'Ryder', null, 'Arash', '2', 'Carling Street', '1422', 'Vancouver', 'British Columbia', 'Canada', 'V4C0E4', 1, 5),
+    ('460447489', 'Geoffrey', null, 'Eckhart', '78', 'Swiss Street', '456', 'Surrey', 'British Columbia', 'Canada', 'V1M4B5', 1, 6),
+    ('893095227', 'Dina', null, 'Gunna', '45', 'Queen Way', '457', 'Los Angeles', 'California', 'United States', '90005', 1, 7),
+    ('326893630', 'Tiffany', null, 'Ardeth', '88', 'Louis Avenue', '458', 'San Diego', 'California', 'United States', '91005', 1, 8),
+    ('519681599', 'Charlotte', null, 'Ajla', '20', 'Rue Polygon', '459', 'Montreal', 'Quebec', 'Canada', 'H1N3B5', 1, 9),
+    ('927253750', 'Anila', null, 'Lassie', '206', 'Rue Pere', '500', 'Quebec City', 'Quebec', 'Canada', 'G2Z8K8', 1, 10),
+    ('495449696', 'Taiwo', 'M', 'Goksu', '209', 'King Way', '501', 'Jacksonville', 'Florida', 'United States', '32012', 1, 11),
+    ('936606473', 'Gili', 'S', 'Naomi', '233', 'Prince Way', '506', 'Miami', 'Florida', 'United States', '32018', 1, 12),
+    ('722296177', 'Malone', 'B', 'Yachin', '84', 'Maple Street', '507', 'Calgary', 'Alberta', 'Canada', 'C2E8N9', 1, 13),
+    ('282400220', 'Hanane', null, 'Shahin', '22', 'Knight Street', '55', 'Edmonton', 'Alberta', 'Canada', 'B2E8N9', 1, 14),
+    ('123456789', 'John', 'D', 'Doe', '27', 'Pine Lane', '101', 'Oklahoma City', 'Oklahoma', 'United States', '73008', 1, 15),
+    ('234567890', 'Jane', 'M', 'Doe', '23', 'Station Avenue', '102', 'Tulsa', 'Oklahoma', 'United States', '74039', 1, 16),
+    ('345678901', 'Bob', null, 'Smith', '31', 'Marine Way', '200', 'Mississauga', 'Ontario', 'Canada', 'D4T0A1', 1, 17),
+    ('456789012', 'Emily', 'A', 'Brown', '320', 'Museum Avenue', '44', 'Hamilton', 'Ontario', 'Canada', 'L0D1B0', 1, 18),
+    ('567890123', 'William', 'T', 'Davis', '3340', 'Ironwood Lane', '6', 'Philadelphia', 'Pennsylvania', 'United States', '19019', 1, 19),
+    ('678901234', 'Elizabeth', 'S', 'Taylor', '344', 'Globe Route', '77', 'Pittsburgh', 'Pennsylvania', 'United States', '16106', 1, 20),
+    ('789012345', 'Michael', 'J', 'Wilson', '35', 'Rowan Lane', '5', 'Richmond', 'British Columbia', 'Canada', 'V6B0A2', 1, 21),
+    ('890123456', 'Sarah', 'E', 'Anderson', '3', 'Monument Passage', '33', 'Burnaby', 'British Columbia', 'Canada', 'V3D0A5', 1, 22),
+    ('901234567', 'David', 'K', 'Thomas', '5555', 'Meadow Route', '1', 'Phoenix', 'Arizona', 'United States', '85601', 1, 23),
+    ('012345678', 'Olivia', 'L', 'Jackson', '37', 'Paradise Street', '8', 'Tuscon', 'Arizona', 'United States', '95641', 1, 24),
+    ('123546789', 'Christopher', 'D', 'Harris', '4180', 'Medieval Avenue', '9', 'San Jose', 'California', 'United States', '64088', 1, 25),
+    ('234657890', 'Ava', 'M', 'Martin', '4444', 'Lavender Street', '44', 'San Francisco', 'California', 'United States', '88816', 1, 26),
+    ('345768901', 'Daniel', 'R', 'Thompson', '437', 'Senna Street', '66', 'Austin', 'Texas', 'United States', '73201', 1, 27),
+    ('583127955', 'Matthew', 'L', 'Hutchinson', '437', 'Globe Boulevard', '66', 'El Paso', 'Texas', 'United States', '74401', 1, 28),
+    ('470310645', 'Danya', null, 'Abir', '437', 'Autumn Boulevard', '66', 'Tampa', 'Florida', 'United States', '99992', 1, 29),
+    ('210138121', 'Ali', null, 'Alam', '437', 'Hill Way', '66', 'Fort Lauderdale', 'Florida', 'United States', '97892', 1, 30),
+    ('159773527', 'Alex', null, 'Hull', '437', 'Lower Lane', '66', 'Columbus', 'Ohio', 'United States', '93452', 1, 31),
+    ('725329332', 'Adam', null, 'Olivier', '437', 'Bay View Way', '66', 'Cleveland', 'Ohio', 'United States', '98852', 1, 32),
+    ('879012893', 'Chanelle', null, 'Wall', '437', 'Blossom Boulevard', '66', 'New York City', 'New York', 'United States', '92252', 1, 33),
+    ('496578748', 'Hassan', null, 'Marwan', '437', 'Petal Avenue', '66', 'Brookhaven', 'New York', 'United States', '32322', 1, 34),
+    ('932286200', 'Alexa', null, 'Sole', '437', 'Hazelnut Avenue', '66', 'Fresno', 'California', 'United States', '32344', 1, 35),
+    ('155350115', 'Juan', 'G', 'Torres', '437', 'Greenfield Street', '66', 'Sacramento', 'California', 'United States', '32343', 1, 36),
+    ('958299033', 'Adriana', null, 'Daniel', '437', 'Chapel Way', '66', 'Charlotte', 'North Calorina', 'United States', '32349', 1, 37),
+    ('898460201', 'Tristan', null, 'Denis', '437', 'Amber Row', '66', 'Raleigh', 'North Calorina', 'United States', '32360', 1, 38),
+    ('456202251', 'Angela', null, 'Wang', '437', 'Highland Avenue', '66', 'Seattle', 'Washington', 'United States', '44594', 1, 39),
+    ('381486598', 'Tyson', null, 'High', '437', 'Bloomfield Lane', '66', 'Spokane', 'Washington', 'United States', '44094', 1, 40);
 ```
 
 #### View for number of available rooms per area
