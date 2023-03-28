@@ -11,7 +11,7 @@ def home():
 
 
 @views.route("/chains/")
-@views.route("/chains/<chain_id>")
+@views.route("/chains/<int:chain_id>")
 def chains(chain_id=None):
     cursor = db.cursor()
     if chain_id:
@@ -20,7 +20,7 @@ def chains(chain_id=None):
             FROM chains
             WHERE chain_id = %s
             """,
-            (chain_id),
+            (chain_id,),
         )
     else:
         cursor.execute(
@@ -34,7 +34,7 @@ def chains(chain_id=None):
 
 
 @views.route("/hotels/")
-@views.route("/hotels/<hotel_id>")
+@views.route("/hotels/<int:hotel_id>")
 def hotels(hotel_id=None):
     cursor = db.cursor()
     if hotel_id:
@@ -43,7 +43,7 @@ def hotels(hotel_id=None):
                 FROM hotels
                 WHERE hotel_id = %s
                 """,
-            (hotel_id),
+            (hotel_id,),
         )
     else:
         cursor.execute(
