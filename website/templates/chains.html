@@ -1,0 +1,20 @@
+{% extends "base.html" %} {% block title %}Chains{% endblock %} {% block content %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Chain ID</th>
+            <th>Chain Name</th>
+            <th>Number of Hotels</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for chain in chains %}
+        <tr>
+            <td>{{ chain.chain_id }}</td>
+            <td>{{ chain.chain_name }}</td>
+            <td>{{ chain.num_hotels }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+    {% endblock %}
