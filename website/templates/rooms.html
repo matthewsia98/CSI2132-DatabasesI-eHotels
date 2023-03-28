@@ -22,6 +22,8 @@
             <div class="form-group col">
                 <label for="capacity">Capacity</label>
                 <select id="capacity" class="form-control" name="capacity">
+                    <option>
+                    </option>
                     {% for capacity in capacities %}
                         {% if form and capacity == form["capacity"] %}
                             <option selected>
@@ -38,41 +40,63 @@
             <div class="form-group col">
                 <label for="city">City</label>
                 <select id="city" class="form-control" name="city">
+                    <option>
+                    </option>
                     {% for city in cities %}
-                        <option>
-                            {{ city }}
-                        </option>
+                        {% if form and city == form["city"] %}
+                            <option selected>
+                                {{ city }}
+                            </option>
+                        {% else %}
+                            <option>
+                                {{ city }}
+                            </option>
+                        {% endif %}
                     {% endfor %}
                 </select>
             </div>
             <div class="form-group col">
                 <label for="chain">Chain</label>
                 <select id="chain" class="form-control" name="chain">
+                    <option>
+                    </option>
                     {% for chain in chains %}
-                        <option>
-                            {{ chain }}
-                        </option>
+                        {% if form and city == form["chain"] %}
+                            <option selected>
+                                {{ chain }}
+                            </option>
+                        {% else %}
+                            <option>
+                                {{ chain }}
+                            </option>
+                        {% endif %}
                     {% endfor %}
                 </select>
             </div>
             <div class="form-group col">
                 <label for="stars">Stars</label>
                 <select id="stars" class="form-control" name="stars">
+                    <option>
+                    </option>
                     {% for star in stars %}
-                        <option>
-                            {{ star }}
-                        </option>
+                        {% if form and star == form["stars"] %}
+                            <option selected>
+                                {{ star }}
+                            </option>
+                        {% else %}
+                            <option>
+                                {{ star }}
+                            </option>
+                        {% endif %}
                     {% endfor %}
                 </select>
             </div>
             <div class="form-group col">
                 <label for="num-rooms">Min. # Rooms</label>
                 <input type="number"
-                       value="1"
                        max="{{ max_num_rooms }}"
                        id="num-rooms"
                        class="form-control"
-                       placeholder="Min. # rooms"
                        name="num-rooms"/>
             </div>
             <div class="form-group col">
@@ -94,14 +118,14 @@
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>Chain Name</th>
+                <th>Chain</th>
                 <th>City</th>
                 <th># Rooms</th>
                 <th>Stars</th>
-                <th>Room Number</th>
+                <th>Room</th>
                 <th>Capacity</th>
                 <th>View</th>
-                <th>Max. Price</th>
+                <th>Price</th>
             </tr>
         </thead>
         <tbody>
