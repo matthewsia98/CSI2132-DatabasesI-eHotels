@@ -1,3 +1,137 @@
 {% extends "base.html" %}
 {% block title %}Sign Up{% endblock %}
-{% block content %}This is the sign up page{% endblock %}
+{% block content %}
+    {% if inserted_id %}
+        <div class="container text-center">
+            <h1>Sign Up</h1>
+            <p>Account created successfully!</p>
+            <p>Your account ID is {{ inserted_id }}.</p>
+            <p>
+                Click <a href="{{ url_for('auth.login') }}">here</a> to log in.
+            </p>
+        </div>
+    {% else %}
+        <form action="" method="post">
+            <div class="form-row">
+                <div class="form-group col">
+                    <label for="first-name">First Name</label>
+                    <input type="text" class="form-control" id="first-name" name="first-name">
+                </div>
+                <div class="form-group col">
+                    <label for="street-number">Street Number</label>
+                    <input type="text"
+                           class="form-control"
+                           id="street-number"
+                           name="street-number">
+                </div>
+                <div class="form-group col">
+                    <label for="country">Country</label>
+                    <input type="text" class="form-control" id="country" name="country">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col">
+                    <label for="middle-initial">Middle Initial</label>
+                    <input type="text"
+                           class="form-control"
+                           id="middle-initial"
+                           name="middle-initial">
+                </div>
+                <div class="form-group col">
+                    <label for="street-name">Street Name</label>
+                    <input type="text" class="form-control" id="street-name" name="street-name">
+                </div>
+                <div class="form-group col">
+                    <label for="province-or-state">Province/State</label>
+                    <input type="text"
+                           class="form-control"
+                           id="province-or-state"
+                           name="province-or-state">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col">
+                    <label for="last-name">Last Name</label>
+                    <input type="text" class="form-control" id="last-name" name="last-name">
+                </div>
+                <div class="form-group col">
+                    <label for="apt-number">Apt Number</label>
+                    <input type="text" class="form-control" id="apt-number" name="apt-number">
+                </div>
+                <div class="form-group col">
+                    <label for="city">City</label>
+                    <input type="text" class="form-control" id="city" name="city">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col">
+                    <label for="ssn">SSN</label>
+                    <input type="text"
+                           class="form-control"
+                           id="ssn"
+                           name="ssn"
+                           placeholder="123-456-789">
+                </div>
+                <div class="form-group col">
+                    <label for="zip">Zip</label>
+                    <input type="text" class="form-control" id="zip" name="zip">
+                </div>
+            </div>
+            <div class="form-row" id="employee-extra-fields" style="display: flex;">
+                <div class="form-group col">
+                    <label for="position">Position</label>
+                    <select id="position" class="form-control" name="position">
+                        <option>
+                        </option>
+                        {% for position in positions %}
+                            <option value="{{ position[0] }}">
+                                {{ position[1] }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col">
+                    <label for="hotel">Hotel</label>
+                    <select id="hotel" class="form-control" name="hotel">
+                        <option>
+                        </option>
+                        {% for hotel in hotels %}
+                            <option value="{{ hotel[0] }}">
+                                ({{ hotel[1] }}) {{ hotel[2] }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <br>
+            <div class="container text-center">
+                <p>Select Account Type</p>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input"
+                           type="radio"
+                           value="customer"
+                           name="customer-or-employee-radio"
+                           id="customer-radio"
+                           checked>
+                    <label class="form-check-label" for="customer-radio">Customer</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input"
+                           type="radio"
+                           value="employee"
+                           name="customer-or-employee-radio"
+                           id="employee-radio">
+                    <label class="form-check-label" for="employee-radio">Employee</label>
+                </div>
+            </div>
+            <br>
+            <div class="container text-center">
+                <button class="btn btn-dark">Sign Up</button>
+            </div>
+        </form>
+    {% endif %}
+{% endblock %}
+{% block script %}
+    <script type="text/javascript"
+            src="{{ url_for('static', filename='sign_up.js') }}"></script>
+{% endblock %}

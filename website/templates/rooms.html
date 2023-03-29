@@ -3,7 +3,7 @@
 {% block content %}
     <form action="{{ url_for('views.rooms') }}" method="post">
         <div class="form-row">
-            <div class="form-group">
+            <div class="form-group col">
                 <label for="start-date">Start Date</label>
                 <input type="date"
                        class="form-control"
@@ -18,42 +18,6 @@
                        id="end-date"
                        name="end-date"
                        placeholder="">
-            </div>
-            <div class="form-group col">
-                <label for="capacity">Capacity</label>
-                <select id="capacity" class="form-control" name="capacity">
-                    <option>
-                    </option>
-                    {% for capacity in capacities %}
-                        {% if form and capacity == form["capacity"] %}
-                            <option selected>
-                                {{ capacity }}
-                            </option>
-                        {% else %}
-                            <option>
-                                {{ capacity }}
-                            </option>
-                        {% endif %}
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group col">
-                <label for="city">City</label>
-                <select id="city" class="form-control" name="city">
-                    <option>
-                    </option>
-                    {% for city in cities %}
-                        {% if form and city == form["city"] %}
-                            <option selected>
-                                {{ city }}
-                            </option>
-                        {% else %}
-                            <option>
-                                {{ city }}
-                            </option>
-                        {% endif %}
-                    {% endfor %}
-                </select>
             </div>
             <div class="form-group col">
                 <label for="chain">Chain</label>
@@ -74,7 +38,7 @@
                 </select>
             </div>
             <div class="form-group col">
-                <label for="stars">Stars</label>
+                <label for="stars">Min. Stars</label>
                 <select id="stars" class="form-control" name="stars">
                     <option>
                     </option>
@@ -100,17 +64,89 @@
                        name="num-rooms"/>
             </div>
             <div class="form-group col">
+                <label for="country">Country</label>
+                <select id="country" class="form-control" name="country">
+                    <option>
+                    </option>
+                    {% for country in countries %}
+                        {% if form and country == form["country"] %}
+                            <option selected>
+                                {{ country }}
+                            </option>
+                        {% else %}
+                            <option>
+                                {{ country }}
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group col">
+                <label for="province-or-state">Province/State</label>
+                <select id="province-or-state" class="form-control" name="province-or-state">
+                    <option>
+                    </option>
+                    {% for province_or_state in provinces_or_states %}
+                        {% if form and province_or_state == form["province_or_state"] %}
+                            <option selected>
+                                {{ province_or_state }}
+                            </option>
+                        {% else %}
+                            <option>
+                                {{ province_or_state }}
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group col">
+                <label for="city">City</label>
+                <select id="city" class="form-control" name="city">
+                    <option>
+                    </option>
+                    {% for city in cities %}
+                        {% if form and city == form["city"] %}
+                            <option selected>
+                                {{ city }}
+                            </option>
+                        {% else %}
+                            <option>
+                                {{ city }}
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group col">
+                <label for="capacity">Room Capacity</label>
+                <select id="capacity" class="form-control" name="capacity">
+                    <option>
+                    </option>
+                    {% for capacity in capacities %}
+                        {% if form and capacity == form["capacity"] %}
+                            <option selected>
+                                {{ capacity }}
+                            </option>
+                        {% else %}
+                            <option>
+                                {{ capacity }}
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group col">
                 <label for="price">Max. Price</label>
                 <input type="number" step="0.01" class="form-control" name="price"/>
             </div>
-            <div class="col">
+            <div class="form-group col">
                 <label for="search" style="visibility:hidden;">Search</label>
-                <button type="submit" id="search" class="btn btn-dark">Search</button>
+                <button type="submit" id="search" class="form-control btn btn-dark">Search</button>
             </div>
-            <div class="col">
+            <div class="form-group col">
                 <label for="clear-search" style="visibility:hidden;">Clear</label>
                 <a href="/rooms">
-                    <button id="clear-search" class="btn btn-dark">Clear</button>
+                    <button id="clear-search" class="form-control btn btn-dark">Clear</button>
                 </a>
             </div>
         </div>
@@ -119,29 +155,62 @@
         <thead>
             <tr>
                 <th>Chain</th>
-                <th>City</th>
-                <th># Rooms</th>
                 <th>Stars</th>
-                <th>Room</th>
+                <th># Rooms</th>
+                <th>Country</th>
+                <th>Province/State</th>
+                <th>City</th>
+                <th>Address</th>
+                <th>Room No.</th>
                 <th>Capacity</th>
                 <th>View</th>
                 <th>Price</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
             {% for room in rooms %}
                 <tr>
-                    <td>{{ room[0] }}</td>
-                    <td>{{ room[1] }}</td>
-                    <td>{{ room[2] }}</td>
-                    <td>{{ room[3] }}</td>
-                    <td>{{ room[4] }}</td>
-                    <td>{{ room[5] }}</td>
+                    <td>
+                        {{ room[0] }}
+                    </td>
+                    <td>
+                        {{ room[1] }}
+                    </td>
+                    <td>
+                        {{ room[2] }}
+                    </td>
+                    <td>
+                        {{ room[3] }}
+                    </td>
+                    <td>
+                        {{ room[4] }}
+                    </td>
+                    <td>
+                        {{ room[5] }}
+                    </td>
                     <td>
                         {{ room[6] }}
                     </td>
                     <td>
                         {{ room[7] }}
+                    </td>
+                    <td>
+                        {{ room[8] }}
+                    </td>
+                    <td>
+                        {{ room[9] }}
+                    </td>
+                    <td>
+                        {{ room[10] }}
+                    </td>
+                    <td>
+                        <form action="{{ url_for('views.book_room', hotel_id=room[11], room_number=room[7]) }}"
+                              method="POST">
+                            <button type="submit" class="btn btn-dark">
+                                Book
+                            </button>
+                        </form>
                     </td>
                 </tr>
             {% endfor %}

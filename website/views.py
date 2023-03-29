@@ -120,6 +120,24 @@ def rooms():
     chains = cursor.fetchall()
     chains = [chain[0] for chain in chains]
 
+    countries_query = r"""SELECT DISTINCT country
+                            FROM hotels
+                            ORDER BY country
+                        """
+    cursor.execute(countries_query)
+    countries = cursor.fetchall()
+    countries = [country[0] for country in countries]
+
+    provinces_or_states_query = r"""SELECT DISTINCT province_or_state
+                                    FROM hotels
+                                    ORDER BY province_or_state
+                                """
+    cursor.execute(provinces_or_states_query)
+    provinces_or_states = cursor.fetchall()
+    provinces_or_states = [
+        province_or_state[0] for province_or_state in provinces_or_states
+    ]
+
     stars_query = r"""SELECT DISTINCT stars
                         FROM hotels
                         ORDER BY stars
@@ -138,13 +156,17 @@ def rooms():
     max_num_rooms = max(num_rooms)
 
     query = r"""SELECT chains.chain_name,
-                    hotels.city,
-                    hotels.num_rooms,
                     hotels.stars,
+                    hotels.num_rooms,
+                    hotels.country,
+                    hotels.province_or_state,
+                    hotels.city,
+                    CONCAT(hotels.street_number, ' ', hotels.street_name, ', ', hotels.zip) AS address,
                     rooms.room_number,
                     rooms.capacity,
                     view_types.description,
-                    rooms.price
+                    rooms.price,
+                    hotels.hotel_id
                 FROM rooms
                 JOIN hotels
                 ON rooms.hotel_id = hotels.hotel_id
@@ -157,13 +179,27 @@ def rooms():
         cursor.execute(
             query
             + "WHERE 1=1"
-            + (" AND rooms.capacity = %s" if request.form["capacity"] != "" else "")
-            + (" AND hotels.city = %s" if request.form["city"] != "" else "")
-            + (" AND chains.chain_name = %s" if request.form["chain"] != "" else "")
-            + (" AND hotels.stars >= %s" if request.form["stars"] != "" else "")
-            + (" AND hotels.num_rooms >= %s" if request.form["num-rooms"] != "" else "")
-            + (" AND rooms.price <= %s" if request.form["price"] != "" else ""),
-            tuple(request.form[key] for key in request.form if request.form[key] != ""),
+            + (" AND chains.chain_name = %s" if request.form.get("chain") != "" else "")
+            + (" AND hotels.stars >= %s" if request.form.get("stars") != "" else "")
+            + (
+                " AND hotels.num_rooms >= %s"
+                if request.form.get("num-rooms") != ""
+                else ""
+            )
+            + (" AND hotels.country = %s" if request.form.get("country") != "" else "")
+            + (
+                " AND hotels.province_or_state = %s"
+                if request.form.get("province-or-state") != ""
+                else ""
+            )
+            + (" AND hotels.city = %s" if request.form.get("city") != "" else "")
+            + (" AND rooms.capacity = %s" if request.form.get("capacity") != "" else "")
+            + (" AND rooms.price <= %s" if request.form.get("price") != "" else ""),
+            tuple(
+                request.form.get(key)
+                for key in request.form
+                if request.form.get(key) != ""
+            ),
         )
         rooms = cursor.fetchall()
         return render_template(
@@ -171,8 +207,10 @@ def rooms():
             form=request.form,
             rooms=rooms,
             capacities=capacities,
+            countries=countries,
             cities=cities,
             chains=chains,
+            provinces_or_states=provinces_or_states,
             stars=stars,
             num_rooms=num_rooms,
             max_num_rooms=max_num_rooms,
@@ -185,11 +223,45 @@ def rooms():
             form=None,
             rooms=rooms,
             capacities=capacities,
+            countries=countries,
             cities=cities,
             chains=chains,
+            provinces_or_states=provinces_or_states,
             stars=stars,
             num_rooms=num_rooms,
             max_num_rooms=max_num_rooms,
         )
 
     cursor.close()
+
+
+@views.route("/book-room/<int:hotel_id>/<string:room_number>", methods=["GET", "POST"])
+def book_room(hotel_id=None, room_number=None):
+    query = r"""SELECT chains.chain_name,
+                    hotels.country,
+                    hotels.province_or_state,
+                    hotels.city,
+                    CONCAT(hotels.street_number, ' ', hotels.street_name) AS address,
+                    hotels.zip,
+                    rooms.room_number,
+                    rooms.capacity,
+                    view_types.description,
+                    rooms.extensible,
+                    rooms.tv,
+                    rooms.air_condition,
+                    rooms.fridge,
+                    rooms.price
+                FROM rooms
+                JOIN hotels
+                ON rooms.hotel_id = hotels.hotel_id
+                JOIN chains
+                ON hotels.chain_id = chains.chain_id
+                JOIN view_types
+                ON rooms.view_type = view_types.id
+                WHERE rooms.hotel_id = %s AND rooms.room_number = %s
+                """
+    cursor = db.cursor()
+    cursor.execute(query, (hotel_id, room_number))
+    room = cursor.fetchone()
+    cursor.close()
+    return render_template("book_room.html", room=room)

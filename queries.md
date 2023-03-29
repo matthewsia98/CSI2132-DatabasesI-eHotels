@@ -183,7 +183,7 @@ CREATE TABLE IF NOT EXISTS hotel_managers (
 CREATE TABLE IF NOT EXISTS customers (
     customer_id SERIAL PRIMARY KEY,
     ssn VARCHAR(11) UNIQUE NOT NULL,
-    registration_date DATE NOT NULL,
+    registration_date DATE DEFAULT now(),
     first_name TEXT NOT NULL,
     middle_initial TEXT,
     last_name TEXT NOT NULL,
