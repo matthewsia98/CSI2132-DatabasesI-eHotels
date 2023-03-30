@@ -1,4 +1,5 @@
-from flask import Blueprint, redirect, render_template, request, url_for
+from flask import (Blueprint, redirect, render_template, request, session,
+                   url_for)
 
 from . import db
 
@@ -28,7 +29,7 @@ def chains(chain_id=None):
         cursor.execute(query)
     chains = cursor.fetchall()
     cursor.close()
-    return render_template("chains.html", chains=chains)
+    return render_template("chains.html", session=session, chains=chains)
 
 
 @views.route("/hotels/")
@@ -56,7 +57,7 @@ def hotels(hotel_id=None):
         cursor.execute(query)
     hotels = cursor.fetchall()
     cursor.close()
-    return render_template("hotels.html", hotels=hotels)
+    return render_template("hotels.html", session=session, hotels=hotels)
 
 
 @views.route("/employees/")
@@ -89,7 +90,7 @@ def employees(employee_id=None):
         cursor.execute(query)
     employees = cursor.fetchall()
     cursor.close()
-    return render_template("employees.html", employees=employees)
+    return render_template("employees.html", session=session, employees=employees)
 
 
 @views.route("/rooms/", methods=["GET", "POST"])
@@ -204,6 +205,7 @@ def rooms():
         rooms = cursor.fetchall()
         return render_template(
             "rooms.html",
+            session=session,
             form=request.form,
             rooms=rooms,
             capacities=capacities,
@@ -220,6 +222,7 @@ def rooms():
         rooms = cursor.fetchall()
         return render_template(
             "rooms.html",
+            session=session,
             form=None,
             rooms=rooms,
             capacities=capacities,
@@ -264,7 +267,7 @@ def book_room(hotel_id=None, room_number=None):
     cursor.execute(query, (hotel_id, room_number))
     room = cursor.fetchone()
     cursor.close()
-    return render_template("book_room.html", room=room)
+    return render_template("book_room.html", session=session, room=room)
 
 
 @views.route(
@@ -282,3 +285,108 @@ def delete_room(hotel_id=None, room_number=None):
         db.commit()
     cursor.close()
     return redirect(url_for("views.rooms"))
+
+
+@views.route("/edit-user/", methods=["GET", "POST"])
+def edit_user():
+    update_success = False
+    cursor = db.cursor()
+    if session.get("user").get("type") == "customer":
+        customer_query = r"""SELECT customers.ssn,
+                                    customers.first_name,
+                                    customers.middle_initial,
+                                    customers.last_name,
+                                    customers.street_number,
+                                    customers.street_name,
+                                    customers.apt_number,
+                                    customers.city,
+                                    customers.province_or_state,
+                                    customers.country,
+                                    customers.zip
+                                FROM customers
+                                WHERE customer_id = %s
+                        """
+        cursor.execute(customer_query, (session.get("user").get("id"),))
+        user = cursor.fetchone()
+    elif session.get("user").get("type") == "employee":
+        employee_query = r"""SELECT employees.ssn,
+                                    employees.first_name,
+                                    employees.middle_initial,
+                                    employees.last_name,
+                                    employees.street_number,
+                                    employees.street_name,
+                                    employees.apt_number,
+                                    employees.city,
+                                    employees.province_or_state,
+                                    employees.country,
+                                    employees.zip
+                                FROM employees
+                                WHERE employee_id = %s
+                        """
+        cursor.execute(employee_query, (session.get("user").get("id"),))
+        user = cursor.fetchone()
+
+    if request.method == "POST":
+        query = (
+            (
+                "UPDATE employees SET"
+                if session.get("user").get("type") == "employee"
+                else "UPDATE customers SET"
+            )
+            + (" ssn = %s," if request.form.get("ssn") != "" else "")
+            + (" first_name = %s," if request.form.get("first-name") != "" else "")
+            + (
+                " middle_initial = %s,"
+                if request.form.get("middle-initial") != ""
+                else ""
+            )
+            + (" last_name = %s," if request.form.get("last-name") != "" else "")
+            + (
+                " street_number = %s,"
+                if request.form.get("street-number") != ""
+                else ""
+            )
+            + (" street_name = %s," if request.form.get("street-name") != "" else "")
+            + (" apt_number = %s," if request.form.get("apt-number") != "" else "")
+            + (" city = %s," if request.form.get("city") != "" else "")
+            + (
+                " province_or_state = %s,"
+                if request.form.get("province-or-state") != ""
+                else ""
+            )
+            + (" country = %s," if request.form.get("country") != "" else "")
+            + (" zip = %s," if request.form.get("zip") != "" else "")
+        )
+        query = query.strip(",")
+        cursor.execute(
+            query
+            + (
+                " WHERE customer_id = %s"
+                if session.get("user").get("type") == "customer"
+                else " WHERE employee_id = %s"
+            )
+            + " RETURNING *;",
+            (
+                request.form.get("ssn"),
+                request.form.get("first-name"),
+                request.form.get("middle-initial"),
+                request.form.get("last-name"),
+                request.form.get("street-number"),
+                request.form.get("street-name"),
+                request.form.get("apt-number"),
+                request.form.get("city"),
+                request.form.get("province-or-state"),
+                request.form.get("country"),
+                request.form.get("zip"),
+                session.get("user").get("id"),
+            ),
+        )
+        result = cursor.fetchone()
+        if result is not None:
+            update_success = True
+        db.commit()
+
+    cursor.close()
+    return render_template(
+        "edit_user.html", session=session, user=user, update_success=update_success
+    )

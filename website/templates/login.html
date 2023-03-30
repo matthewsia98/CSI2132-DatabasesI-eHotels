@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Login{% endblock %}
 {% block content %}
-    {% if user is none %}
+    {% if session.get("user") is none %}
         {% if failed_login %}
             <div class="alert alert-danger text-center" role="alert">Login failed. Please try again.</div>
         {% endif %}
@@ -42,16 +42,16 @@
         </form>
     {% else %}
         <div class="container text-center">
-            <h1>You are logged in as {{ user_type }} {{ user[0] }}</h1>
+            <h1>You are logged in as {{ session.get("user").get("type") }} {{ session.get("user").get("id") }}</h1>
             <br/>
             <table class="table table-striped">
                 <tr>
                     <td>First Name</td>
-                    <td>{{ user[1] }}</td>
+                    <td>{{ session.get("user").get("first_name") }}</td>
                 </tr>
                 <tr>
                     <td>Last Name</td>
-                    <td>{{ user[2] }}</td>
+                    <td>{{ session.get("user").get("last_name") }}</td>
                 </tr>
             </table>
         </div>

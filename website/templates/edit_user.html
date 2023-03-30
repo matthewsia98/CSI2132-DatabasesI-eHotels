@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Edit User{% endblock %}
+{% block content %}
+    {% if update_success %}<div class="alert alert-success" role="alert">User updated successfully!</div>{% endif %}
+    <form action="/edit-user" method="post">
+        <div class="form-row">
+            <div class="form-group col">
+                <label for="first-name">First Name</label>
+                <input type="text"
+                       class="form-control"
+                       id="first-name"
+                       name="first-name"
+                       value="{{ user[1] }}"/>
+            </div>
+            <div class="form-group col">
+                <label for="middle-initial">Middle Initial</label>
+                <input type="text"
+                       class="form-control"
+                       id="middle-initial"
+                       name="middle-initial"
+                       value="{{ user[2] }}"/>
+            </div>
+            <div class="form-group col">
+                <label for="last-name">Last Name</label>
+                <input type="text"
+                       class="form-control"
+                       id="last-name"
+                       name="last-name"
+                       value="{{ user[3] }}"/>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col">
+                <label for="street-number">Street Number</label>
+                <input type="text"
+                       class="form-control"
+                       id="street-number"
+                       name="street-number"
+                       value="{{ user[4] }}"/>
+            </div>
+            <div class="form-group col">
+                <label for="street-name">Street Name</label>
+                <input type="text"
+                       class="form-control"
+                       id="street-name"
+                       name="street-name"
+                       value="{{ user[5] }}"/>
+            </div>
+            <div class="form-group col">
+                <label for="apt-number">Apt Number</label>
+                <input type="text"
+                       class="form-control"
+                       id="apt-number"
+                       name="apt-number"
+                       value="{{ user[6] }}"/>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col">
+                <label for="city">City</label>
+                <input type="text"
+                       class="form-control"
+                       id="city"
+                       name="city"
+                       value="{{ user[7] }}"/>
+            </div>
+            <div class="form-group col">
+                <label for="province-or-state">Province/State</label>
+                <input type="text"
+                       class="form-control"
+                       id="province-or-state"
+                       name="province-or-state"
+                       value="{{ user[8] }}"/>
+            </div>
+            <div class="form-group col">
+                <label for="country">Country</label>
+                <input type="text"
+                       class="form-control"
+                       id="country"
+                       name="country"
+                       value="{{ user[9] }}"/>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col">
+                <label for="zip">Zip</label>
+                <input type="text"
+                       class="form-control"
+                       id="zip"
+                       name="zip"
+                       value="{{ user[10] }}"/>
+            </div>
+            <div class="form-group col">
+                <label for="ssn">SSN</label>
+                <input type="text"
+                       class="form-control"
+                       id="ssn"
+                       name="ssn"
+                       value="{{ user[0] }}"/>
+            </div>
+        </div>
+        <br/>
+        <div class="container text-center">
+            <button type="submit" class="btn btn-dark">Edit Profile</button>
+        </div>
+    </form>
+{% endblock %}

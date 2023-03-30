@@ -34,6 +34,24 @@
           <a class="nav-item nav-link" id="signUp" href="/sign-up">Sign Up</a>
         </div>
       </div>
+      <div class="d-flex text-right align-items-center">
+        <a class="nav-item nav-link" id="logout" href="/logout">Logout</a>
+        {% if session.get("user") is none %}
+        <span class="badge badge-secondary" style="padding: 8px">
+          Not Logged In
+        </span>
+        {% else %}
+        <form action="/edit-user" method="get">
+          <button type="submit" class="btn btn-light">
+            {{ session.get("user").get("type") }} {{
+            session.get("user").get("id") }}
+            <br />
+            {{ session.get("user").get("first_name") }} {{
+            session.get("user").get("last_name") }}
+          </button>
+        </form>
+        {% endif %}
+      </div>
     </nav>
     <div class="container-fluid">{% block content %}{% endblock %}</div>
     <script

@@ -1,22 +1,33 @@
 {% extends "base.html" %}
 {% block title %}Chains{% endblock %}
 {% block content %}
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Chain ID</th>
-                <th>Chain Name</th>
-                <th>Number of Hotels</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for chain in chains %}
+    {% if session.get("user") is none %}
+        <div class="container text-center">
+            <br/>
+            <h1>You are not logged in yet</h1>
+            <br/>
+            <p>
+                Click <a href="{{ url_for('auth.login') }}">here</a> to log in or <a href="{{ url_for('auth.sign_up') }}">here</a> to sign up.
+            </p>
+        </div>
+    {% else %}
+        <table class="table table-striped">
+            <thead>
                 <tr>
-                    <td>{{ chain[0] }}</td>
-                    <td>{{ chain[1] }}</td>
-                    <td>{{ chain[2] }}</td>
+                    <th>Chain ID</th>
+                    <th>Chain Name</th>
+                    <th>Number of Hotels</th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                {% for chain in chains %}
+                    <tr>
+                        <td>{{ chain[0] }}</td>
+                        <td>{{ chain[1] }}</td>
+                        <td>{{ chain[2] }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
 {% endblock %}

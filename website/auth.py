@@ -7,11 +7,11 @@ auth = Blueprint("auth", __name__)
 
 @auth.route("/login", methods=["GET", "POST"])
 def login():
+    print("SESSION:", session)
     if request.method == "GET":
         return render_template(
             "login.html",
-            user=session.get("user"),
-            user_type=session.get("user_type"),
+            session=session,
             failed_login=False,
         )
     elif request.method == "POST":
@@ -31,34 +31,34 @@ def login():
 
         cursor = db.cursor()
         if request.form.get("customer-or-employee-radio") == "customer":
-            session["user_type"] = "customer"
             cursor.execute(customer_query, (request.form.get("ssn"),))
         elif request.form.get("customer-or-employee-radio") == "employee":
-            session["user_type"] = "employee"
             cursor.execute(employee_query, (request.form.get("ssn"),))
 
         user = cursor.fetchone()
         if user is None:
             return render_template(
                 "login.html",
-                user=session.get("user"),
-                user_type=session.get("user_type"),
+                session=session,
                 failed_login=True,
             )
         else:
-            session["user"] = user
+            session["user"] = {
+                "type": request.form.get("customer-or-employee-radio"),
+                "id": user[0],
+                "first_name": user[1],
+                "last_name": user[2],
+            }
             return render_template(
                 "login.html",
-                user=session.get("user"),
-                user_type=session.get("user_type"),
+                session=session,
             )
 
 
 @auth.route("/logout")
 def logout():
-    session["user_type"] = None
     session["user"] = None
-    return render_template("login.html", user=session.get("user"))
+    return render_template("login.html", session=session)
 
 
 @auth.route("/sign-up/", methods=["GET", "POST"])

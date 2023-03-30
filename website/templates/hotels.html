@@ -1,34 +1,45 @@
 {% extends "base.html" %}
 {% block title %}Hotels{% endblock %}
 {% block content %}
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Hotel ID</th>
-                <th>Street Number</th>
-                <th>Street Name</th>
-                <th>City</th>
-                <th>Province/State</th>
-                <th>Country</th>
-                <th>Zip</th>
-                <th>Stars</th>
-                <th>Rooms</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for hotel in hotels %}
+    {% if session.get("user") is none %}
+        <div class="container text-center">
+            <br/>
+            <h1>You are not logged in yet</h1>
+            <br/>
+            <p>
+                Click <a href="{{ url_for('auth.login') }}">here</a> to log in or <a href="{{ url_for('auth.sign_up') }}">here</a> to sign up.
+            </p>
+        </div>
+    {% else %}
+        <table class="table table-striped">
+            <thead>
                 <tr>
-                    <td>{{ hotel[0] }}</td>
-                    <td>{{ hotel[1] }}</td>
-                    <td>{{ hotel[2] }}</td>
-                    <td>{{ hotel[3] }}</td>
-                    <td>{{ hotel[4] }}</td>
-                    <td>{{ hotel[5] }}</td>
-                    <td>{{ hotel[6] }}</td>
-                    <td>{{ hotel[7] }}</td>
-                    <td>{{ hotel[8] }}</td>
+                    <th>Hotel ID</th>
+                    <th>Street Number</th>
+                    <th>Street Name</th>
+                    <th>City</th>
+                    <th>Province/State</th>
+                    <th>Country</th>
+                    <th>Zip</th>
+                    <th>Stars</th>
+                    <th>Rooms</th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                {% for hotel in hotels %}
+                    <tr>
+                        <td>{{ hotel[0] }}</td>
+                        <td>{{ hotel[1] }}</td>
+                        <td>{{ hotel[2] }}</td>
+                        <td>{{ hotel[3] }}</td>
+                        <td>{{ hotel[4] }}</td>
+                        <td>{{ hotel[5] }}</td>
+                        <td>{{ hotel[6] }}</td>
+                        <td>{{ hotel[7] }}</td>
+                        <td>{{ hotel[8] }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
 {% endblock %}
