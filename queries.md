@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS room_damages (
     room_number TEXT,
     description TEXT NOT NULL,
     PRIMARY KEY (hotel_id, room_number, description),
-    FOREIGN KEY (hotel_id, room_number) REFERENCES rooms (hotel_id, room_number)
+    FOREIGN KEY (hotel_id, room_number) REFERENCES rooms (hotel_id, room_number) ON DELETE CASCADE
 );
 ```
 

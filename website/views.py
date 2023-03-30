@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, redirect, render_template, request, url_for
 
 from . import db
 
@@ -265,3 +265,20 @@ def book_room(hotel_id=None, room_number=None):
     room = cursor.fetchone()
     cursor.close()
     return render_template("book_room.html", room=room)
+
+
+@views.route(
+    "/delete-room/<int:hotel_id>/<string:room_number>", methods=["GET", "POST"]
+)
+def delete_room(hotel_id=None, room_number=None):
+    query = r"""DELETE FROM rooms
+                    WHERE hotel_id = %s AND room_number = %s
+                    RETURNING hotel_id, room_number
+            """
+    cursor = db.cursor()
+    cursor.execute(query, (hotel_id, room_number))
+    deleted_room = cursor.fetchone()
+    if deleted_room is not None:
+        db.commit()
+    cursor.close()
+    return redirect(url_for("views.rooms"))
