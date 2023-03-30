@@ -166,17 +166,6 @@ CREATE TABLE IF NOT EXISTS employees (
 );
 ```
 
-#### Create `hotel_managers` table
-
-```sql
-CREATE TABLE IF NOT EXISTS hotel_managers (
-    hotel_id INTEGER NOT NULL,
-    manager_id INTEGER NOT NULL,
-    FOREIGN KEY (hotel_id) REFERENCES hotels (hotel_id),
-    FOREIGN KEY (manager_id) REFERENCES employees (employee_id)
-);
-```
-
 #### Create `customers` table
 
 ```sql

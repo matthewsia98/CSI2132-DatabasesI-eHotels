@@ -1,18 +1,64 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, session
 
 from . import db
 
 auth = Blueprint("auth", __name__)
 
 
-@auth.route("/login")
+@auth.route("/login", methods=["GET", "POST"])
 def login():
-    return render_template("login.html", logged_in=False)
+    if request.method == "GET":
+        return render_template(
+            "login.html",
+            user=session.get("user"),
+            user_type=session.get("user_type"),
+            failed_login=False,
+        )
+    elif request.method == "POST":
+        customer_query = r"""SELECT customers.customer_id,
+                                    customers.first_name,
+                                    customers.last_name
+                                FROM customers
+                                WHERE customers.ssn = %s
+                        """
+
+        employee_query = r"""SELECT employees.employee_id,
+                                    employees.first_name,
+                                    employees.last_name
+                                FROM employees
+                                WHERE employees.ssn = %s
+                        """
+
+        cursor = db.cursor()
+        if request.form.get("customer-or-employee-radio") == "customer":
+            session["user_type"] = "customer"
+            cursor.execute(customer_query, (request.form.get("ssn"),))
+        elif request.form.get("customer-or-employee-radio") == "employee":
+            session["user_type"] = "employee"
+            cursor.execute(employee_query, (request.form.get("ssn"),))
+
+        user = cursor.fetchone()
+        if user is None:
+            return render_template(
+                "login.html",
+                user=session.get("user"),
+                user_type=session.get("user_type"),
+                failed_login=True,
+            )
+        else:
+            session["user"] = user
+            return render_template(
+                "login.html",
+                user=session.get("user"),
+                user_type=session.get("user_type"),
+            )
 
 
 @auth.route("/logout")
 def logout():
-    return "<p>Logout</p>"
+    session["user_type"] = None
+    session["user"] = None
+    return render_template("login.html", user=session.get("user"))
 
 
 @auth.route("/sign-up/", methods=["GET", "POST"])

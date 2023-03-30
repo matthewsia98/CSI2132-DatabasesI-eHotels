@@ -11,22 +11,22 @@
             </p>
         </div>
     {% else %}
-        <form action="" method="post">
+        <form action="{{ url_for('auth.sign_up') }}" method="post">
             <div class="form-row">
                 <div class="form-group col">
                     <label for="first-name">First Name</label>
-                    <input type="text" class="form-control" id="first-name" name="first-name">
+                    <input type="text" class="form-control" id="first-name" name="first-name"/>
                 </div>
                 <div class="form-group col">
                     <label for="street-number">Street Number</label>
                     <input type="text"
                            class="form-control"
                            id="street-number"
-                           name="street-number">
+                           name="street-number"/>
                 </div>
                 <div class="form-group col">
                     <label for="country">Country</label>
-                    <input type="text" class="form-control" id="country" name="country">
+                    <input type="text" class="form-control" id="country" name="country"/>
                 </div>
             </div>
             <div class="form-row">
@@ -35,32 +35,32 @@
                     <input type="text"
                            class="form-control"
                            id="middle-initial"
-                           name="middle-initial">
+                           name="middle-initial"/>
                 </div>
                 <div class="form-group col">
                     <label for="street-name">Street Name</label>
-                    <input type="text" class="form-control" id="street-name" name="street-name">
+                    <input type="text" class="form-control" id="street-name" name="street-name"/>
                 </div>
                 <div class="form-group col">
                     <label for="province-or-state">Province/State</label>
                     <input type="text"
                            class="form-control"
                            id="province-or-state"
-                           name="province-or-state">
+                           name="province-or-state"/>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group col">
                     <label for="last-name">Last Name</label>
-                    <input type="text" class="form-control" id="last-name" name="last-name">
+                    <input type="text" class="form-control" id="last-name" name="last-name"/>
                 </div>
                 <div class="form-group col">
                     <label for="apt-number">Apt Number</label>
-                    <input type="text" class="form-control" id="apt-number" name="apt-number">
+                    <input type="text" class="form-control" id="apt-number" name="apt-number"/>
                 </div>
                 <div class="form-group col">
                     <label for="city">City</label>
-                    <input type="text" class="form-control" id="city" name="city">
+                    <input type="text" class="form-control" id="city" name="city"/>
                 </div>
             </div>
             <div class="form-row">
@@ -70,11 +70,11 @@
                            class="form-control"
                            id="ssn"
                            name="ssn"
-                           placeholder="123-456-789">
+                           placeholder="123-456-789"/>
                 </div>
                 <div class="form-group col">
                     <label for="zip">Zip</label>
-                    <input type="text" class="form-control" id="zip" name="zip">
+                    <input type="text" class="form-control" id="zip" name="zip"/>
                 </div>
             </div>
             <div class="form-row" id="employee-extra-fields" style="display: flex;">
@@ -112,7 +112,7 @@
                            value="customer"
                            name="customer-or-employee-radio"
                            id="customer-radio"
-                           checked>
+                           checked/>
                     <label class="form-check-label" for="customer-radio">Customer</label>
                 </div>
                 <div class="form-check form-check-inline">
@@ -120,13 +120,13 @@
                            type="radio"
                            value="employee"
                            name="customer-or-employee-radio"
-                           id="employee-radio">
+                           id="employee-radio"/>
                     <label class="form-check-label" for="employee-radio">Employee</label>
                 </div>
             </div>
-            <br>
+            <br/>
             <div class="container text-center">
-                <button class="btn btn-dark">Sign Up</button>
+                <button type="submit" class="btn btn-dark">Sign Up</button>
             </div>
         </form>
     {% endif %}
