@@ -1052,16 +1052,39 @@ INSERT INTO employees (ssn, first_name, middle_initial, last_name, street_number
 #### View for number of available rooms per area
 
 ```sql
-CREATE OR REPLACE VIEW num_available_rooms AS
+CREATE OR REPLACE VIEW available_rooms_per_area AS
+    SELECT hotels.country,
+        hotels.province_or_state,
+        hotels.city,
+        COUNT(*) AS num_available_rooms
+    FROM rooms
+    JOIN hotels
+    ON rooms.hotel_id = hotels.hotel_id
+    JOIN chains
+    ON hotels.chain_id = chains.chain_id
+    WHERE (rooms.hotel_id, rooms.room_number) NOT IN (
+        SELECT hotel_id, room_number from bookings
+        WHERE current_date < start_date or current_date >= end_date
+    )
+    GROUP BY hotels.country, hotels.province_or_state, hotels.city
+    ORDER BY hotels.country, hotels.province_or_state, hotels.city
 ```
 
 #### View for capacity of all rooms of a specific hotel
 
 ```sql
-CREATE OR REPLACE VIEW hotel_room_capacities AS
-    SELECT hotels.hotel_id, rooms.room_number, rooms.capacity
+CREATE OR REPLACE VIEW room_capacities AS
+    SELECT chains.chain_name,
+        hotels.hotel_id,
+        hotels.country,
+        hotels.province_or_state,
+        hotels.city,
+        rooms.room_number,
+        rooms.capacity
     FROM hotels
+    JOIN chains
+    ON hotels.chain_id = chains.chain_id
     JOIN rooms
     ON hotels.hotel_id = rooms.hotel_id
-    ORDER BY hotels.hotel_id, rooms.capacity
+    ORDER BY chains.chain_name, hotels.hotel_id, rooms.room_number
 ```

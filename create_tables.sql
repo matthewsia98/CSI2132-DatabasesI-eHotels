@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS chains (
     num_hotels INTEGER DEFAULT 0
 );
 
+
 -- Create chain_offices table
 CREATE TABLE IF NOT EXISTS chain_offices (
     id SERIAL PRIMARY KEY,
@@ -16,8 +17,9 @@ CREATE TABLE IF NOT EXISTS chain_offices (
     country TEXT NOT NULL,
     zip TEXT NOT NULL,
     chain_id INTEGER NOT NULL,
-    FOREIGN KEY (chain_id) REFERENCES chains(chain_id)
+    FOREIGN KEY (chain_id) REFERENCES chains(chain_id) ON DELETE CASCADE
 );
+
 
 -- Create chain_phone_numbers table
 CREATE TABLE IF NOT EXISTS chain_phone_numbers (
@@ -28,6 +30,7 @@ CREATE TABLE IF NOT EXISTS chain_phone_numbers (
     FOREIGN KEY(chain_id) REFERENCES chains(chain_id) ON DELETE CASCADE
 );
 
+
 -- Create chain_email_addresses table
 CREATE TABLE IF NOT EXISTS chain_email_addresses (
     id SERIAL PRIMARY KEY,
@@ -36,6 +39,7 @@ CREATE TABLE IF NOT EXISTS chain_email_addresses (
     chain_id INTEGER NOT NULL,
     FOREIGN KEY(chain_id) REFERENCES chains(chain_id) ON DELETE CASCADE
 );
+
 
 -- Create hotels table
 CREATE TABLE IF NOT EXISTS hotels (
@@ -53,6 +57,7 @@ CREATE TABLE IF NOT EXISTS hotels (
     FOREIGN KEY (chain_id) REFERENCES chains(chain_id) ON DELETE CASCADE
 );
 
+
 -- Create hotel_phone_numbers table
 CREATE TABLE IF NOT EXISTS hotel_phone_numbers (
     id SERIAL PRIMARY KEY,
@@ -61,6 +66,7 @@ CREATE TABLE IF NOT EXISTS hotel_phone_numbers (
     hotel_id INTEGER NOT NULL,
     FOREIGN KEY (hotel_id) REFERENCES hotels(hotel_id) ON DELETE CASCADE
 );
+
 
 -- Create hotel_email_addresses table
 CREATE TABLE IF NOT EXISTS hotel_email_addresses (
@@ -71,11 +77,13 @@ CREATE TABLE IF NOT EXISTS hotel_email_addresses (
     FOREIGN KEY (hotel_id) REFERENCES hotels(hotel_id) ON DELETE CASCADE
 );
 
+
 -- Create view_types table
 CREATE TABLE IF NOT EXISTS view_types (
     id SERIAL PRIMARY KEY,
     description TEXT NOT NULL
 );
+
 
 -- Create rooms table
 CREATE TABLE IF NOT EXISTS rooms (
@@ -92,8 +100,9 @@ CREATE TABLE IF NOT EXISTS rooms (
     CHECK (price > 0),
     PRIMARY KEY (hotel_id, room_number),
     FOREIGN KEY (hotel_id) REFERENCES hotels(hotel_id) ON DELETE CASCADE,
-    FOREIGN KEY (view_type) REFERENCES view_types(id)
+    FOREIGN KEY (view_type) REFERENCES view_types(id) ON DELETE SET NULL
 );
+
 
 -- Create room_damages table
 CREATE TABLE IF NOT EXISTS room_damages (
@@ -104,11 +113,13 @@ CREATE TABLE IF NOT EXISTS room_damages (
     FOREIGN KEY (hotel_id, room_number) REFERENCES rooms (hotel_id, room_number) ON DELETE CASCADE
 );
 
+
 -- Create positions table
 CREATE TABLE IF NOT EXISTS positions (
     position_id SERIAL PRIMARY KEY,
     position_name TEXT NOT NULL
 );
+
 
 -- Create employees table
 CREATE TABLE IF NOT EXISTS employees (
@@ -126,9 +137,10 @@ CREATE TABLE IF NOT EXISTS employees (
     zip TEXT NOT NULL,
     position_id INTEGER,
     hotel_id INTEGER,
-    FOREIGN KEY (position_id) REFERENCES positions(position_id),
-    FOREIGN KEY (hotel_id) REFERENCES hotels(hotel_id)
+    FOREIGN KEY (position_id) REFERENCES positions(position_id) ON DELETE SET NULL,
+    FOREIGN KEY (hotel_id) REFERENCES hotels(hotel_id) ON DELETE SET NULL
 );
+
 
 -- Create customers table
 CREATE TABLE IF NOT EXISTS customers (
@@ -147,8 +159,10 @@ CREATE TABLE IF NOT EXISTS customers (
     zip TEXT NOT NULL
 );
 
+
 -- Install uuid module
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 
 -- Create bookings table
 CREATE TABLE IF NOT EXISTS bookings (
@@ -159,9 +173,10 @@ CREATE TABLE IF NOT EXISTS bookings (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     PRIMARY KEY (booking_id),
-    FOREIGN KEY (customer_id) REFERENCES customers (customer_id),
-    FOREIGN KEY (hotel_id, room_number) REFERENCES rooms (hotel_id, room_number)
+    FOREIGN KEY (customer_id) REFERENCES customers (customer_id) ON DELETE CASCADE,
+    FOREIGN KEY (hotel_id, room_number) REFERENCES rooms (hotel_id, room_number) ON DELETE CASCADE
 );
+
 
 -- Create rentals table
 CREATE TABLE IF NOT EXISTS rentals (
@@ -174,10 +189,47 @@ CREATE TABLE IF NOT EXISTS rentals (
     end_date DATE,
     paid_amount NUMERIC(8, 2),
     PRIMARY KEY (rental_id),
-    FOREIGN KEY (customer_id) REFERENCES customers (customer_id),
-    FOREIGN KEY (booking_id) REFERENCES bookings (booking_id),
-    FOREIGN KEY (hotel_id, room_number) REFERENCES rooms (hotel_id, room_number)
+    FOREIGN KEY (customer_id) REFERENCES customers (customer_id) ON DELETE CASCADE,
+    FOREIGN KEY (booking_id) REFERENCES bookings (booking_id) ON DELETE SET NULL,
+    FOREIGN KEY (hotel_id, room_number) REFERENCES rooms (hotel_id, room_number) ON DELETE CASCADE
 );
+
+
+-- View for number of available rooms per area
+CREATE OR REPLACE VIEW available_rooms_per_area AS
+    SELECT hotels.country,
+        hotels.province_or_state,
+        hotels.city,
+        COUNT(*) AS num_available_rooms
+    FROM rooms
+    JOIN hotels
+    ON rooms.hotel_id = hotels.hotel_id
+    JOIN chains
+    ON hotels.chain_id = chains.chain_id
+    WHERE (rooms.hotel_id, rooms.room_number) NOT IN (
+        SELECT hotel_id, room_number from bookings
+        WHERE current_date < start_date or current_date >= end_date
+    )
+    GROUP BY hotels.country, hotels.province_or_state, hotels.city
+    ORDER BY hotels.country, hotels.province_or_state, hotels.city
+
+
+-- View for capacity of all rooms of a specific hotel
+CREATE OR REPLACE VIEW room_capacities AS
+    SELECT chains.chain_name,
+        hotels.hotel_id,
+        hotels.country,
+        hotels.province_or_state,
+        hotels.city,
+        rooms.room_number,
+        rooms.capacity
+    FROM hotels
+    JOIN chains
+    ON hotels.chain_id = chains.chain_id
+    JOIN rooms
+    ON hotels.hotel_id = rooms.hotel_id
+    ORDER BY chains.chain_name, hotels.hotel_id, rooms.room_number
+
 
 -- num_hotels trigger
 CREATE OR REPLACE FUNCTION num_hotels() RETURNS TRIGGER AS $num_hotels$
@@ -199,6 +251,7 @@ CREATE OR REPLACE TRIGGER trig_num_hotels
     FOR EACH ROW
     EXECUTE PROCEDURE num_hotels();
 
+
 -- num_rooms trigger
 CREATE OR REPLACE FUNCTION num_rooms() RETURNS TRIGGER AS $num_rooms$
     BEGIN
@@ -218,6 +271,7 @@ CREATE OR REPLACE TRIGGER trig_num_rooms
     AFTER INSERT OR DELETE ON rooms
     FOR EACH ROW
     EXECUTE PROCEDURE num_rooms();
+
 
 -- check_delete_manager trigger
 CREATE OR REPLACE FUNCTION check_delete_manager() RETURNS TRIGGER as $check_delete_manager$
