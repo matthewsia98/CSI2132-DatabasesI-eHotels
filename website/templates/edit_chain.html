@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}Edit User{% endblock %}
+{% block content %}
+    {% if update_success %}<div class="alert alert-success" role="alert">Chain Name updated successfully!</div>{% endif %}
+    <div class="d-flex flex-column justify-content-center align-items-center">
+        {% if session.get("user").get("type") == "customer" %}
+            <form id="name-form"
+                  action="{{ url_for('views.edit_chain', chain_id=chain[0]) }}"
+                  method="post">
+                <div class="form-row">
+                    <div class="form-group text-center">
+                        <div class="form-group text-center">
+                            <label for="chain-name">Chain Name</label>
+                            <input type="text"
+                                   class="form-control text-center"
+                                   id="chain-name"
+                                   name="chain-name"
+                                   value="{{ chain[1] }}"
+                                   disabled/>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <button type="submit" form="name-form" class="btn btn-dark disabled" disabled>Change Name</button>
+        {% else %}
+            <form id="name-form"
+                  action="{{ url_for('views.edit_chain', chain_id=chain[0]) }}"
+                  method="post">
+                <div class="form-row">
+                    <div class="form-group text-center">
+                        <label for="chain-name">Chain Name</label>
+                        <input type="text"
+                               class="form-control text-center"
+                               id="chain-name"
+                               name="chain-name"
+                               value="{{ chain[1] }}"/>
+                    </div>
+                </div>
+            </form>
+            <button type="submit" form="name-form" class="btn btn-dark">Change Name</button>
+        {% endif %}
+    </div>
+    <br/>
+    <hr/>
+    <h3>Offices</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th></th>
+                <th>Street Number</th>
+                <th>Street Name</th>
+                <th>Apt Number</th>
+                <th>City</th>
+                <th>Province or State</th>
+                <th>Country</th>
+                <th>Zip</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for office in offices %}
+                <tr>
+                    <td>
+                        {% if session.get("user").get("type") == "customer" %}
+                            <form action="{{ url_for('views.delete_office', office_id=office[-1]) }}"
+                                  method="post">
+                                <button type="submit" class="btn btn-light btn-sm disabled" disabled>x</button>
+                            </form>
+                        {% else %}
+                            <form action="{{ url_for('views.delete_office', office_id=office[-1]) }}"
+                                  method="post">
+                                <button type="submit" class="btn btn-light btn-sm">x</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                    <td>{{ office[0] }}</td>
+                    <td>{{ office[1] }}</td>
+                    <td>{{ office[2] }}</td>
+                    <td>{{ office[3] }}</td>
+                    <td>{{ office[4] }}</td>
+                    <td>{{ office[5] }}</td>
+                    <td>{{ office[6] }}</td>
+                    <td>
+                        {% if session.get("user").get("type") == "customer" %}
+                            <form action="{{ url_for('views.edit_office', office_id=office[-1]) }}"
+                                  method="post">
+                                <button type="submit" class="btn btn-dark disabled" disabled>Edit</button>
+                            </form>
+                        {% else %}
+                            <form action="{{ url_for('views.edit_office', office_id=office[-1]) }}"
+                                  method="post">
+                                <button type="submit" class="btn btn-dark">Edit</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <br/>
+    <hr/>
+    <h3>
+        Phone Numbers
+    </h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>
+                </th>
+                <th>
+                    Phone Number
+                </th>
+                <th>
+                    Description
+                </th>
+                <th>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for phone in phones %}
+                <tr>
+                    <td>
+                        {% if session.get("user").get("type") == "customer" %}
+                            <form action="{{ url_for('views.delete_phone', phone_id=phone[-1]) }}"
+                                  method="post">
+                                <button type="submit" class="btn btn-light btn-sm disabled" disabled>
+                                    x
+                                </button>
+                            </form>
+                        {% else %}
+                            <form action="{{ url_for('views.delete_phone', phone_id=phone[-1]) }}"
+                                  method="post">
+                                <button type="submit" class="btn btn-light btn-sm">
+                                    x
+                                </button>
+                            </form>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ phone[0] }}
+                    </td>
+                    <td>
+                        {{ phone[1] }}
+                    </td>
+                    <td>
+                        {% if session.get("user").get("type") == "customer" %}
+                            <form action="{{ url_for('views.edit_phone', phone_id=phone[-1]) }}"
+                                  method="post">
+                                <button type="submit" class="btn btn-dark disabled" disabled>
+                                    Edit
+                                </button>
+                            </form>
+                        {% else %}
+                            <form action="{{ url_for('views.edit_phone', phone_id=phone[-1]) }}"
+                                  method="post">
+                                <button type="submit" class="btn btn-dark">
+                                    Edit
+                                </button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <br/>
+    <hr/>
+    <h3>
+        Email Addresses
+    </h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>
+                </th>
+                <th>
+                    Email Address
+                </th>
+                <th>
+                    Description
+                </th>
+                <th>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for email in emails %}
+                <tr>
+                    <td>
+                        {% if session.get("user").get("type") == "customer" %}
+                            <form action="{{ url_for('views.delete_email', email_id=email[-1]) }}"
+                                  method="post">
+                                <button type="submit" class="btn btn-light btn-sm disabled" disabled>
+                                    x
+                                </button>
+                            </form>
+                        {% else %}
+                            <form action="{{ url_for('views.delete_email', email_id=email[-1]) }}"
+                                  method="post">
+                                <button type="submit" class="btn btn-light btn-sm">
+                                    x
+                                </button>
+                            </form>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ email[0] }}
+                    </td>
+                    <td>
+                        {{ email[1] }}
+                    </td>
+                    <td>
+                        {% if session.get("user").get("type") == "customer" %}
+                            <form action="{{ url_for('views.edit_email', email_id=email[-1]) }}"
+                                  method="post">
+                                <button type="submit" class="btn btn-dark disabled" disabled>
+                                    Edit
+                                </button>
+                            </form>
+                        {% else %}
+                            <form action="{{ url_for('views.edit_email', email_id=email[-1]) }}"
+                                  method="post">
+                                <button type="submit" class="btn btn-dark">
+                                    Edit
+                                </button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

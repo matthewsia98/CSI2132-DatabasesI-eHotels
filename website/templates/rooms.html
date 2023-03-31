@@ -242,14 +242,14 @@
                         <td>
                             {% if session.get("user").get("type") == "customer" %}
                                 <form action="{{ url_for('views.book_room', hotel_id=room[11], room_number=room[7]) }}"
-                                      method="POST">
+                                      method="get">
                                     <button type="submit" class="btn btn-dark">
                                         Book
                                     </button>
                                 </form>
                             {% else %}
                                 <form action="{{ url_for('views.edit_room', hotel_id=room[11], room_number=room[7]) }}"
-                                      method="POST">
+                                      method="get">
                                     <button type="submit" class="btn btn-dark">
                                         Edit
                                     </button>

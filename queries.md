@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS chain_offices (
     country TEXT NOT NULL,
     zip TEXT NOT NULL,
     chain_id INTEGER NOT NULL,
-    FOREIGN KEY (chain_id) REFERENCES chains(chain_id)
+    FOREIGN KEY (chain_id) REFERENCES chains(chain_id) ON DELETE CASCADE
 );
 ```
 
@@ -162,7 +162,7 @@ CREATE TABLE IF NOT EXISTS employees (
     position_id INTEGER,
     hotel_id INTEGER,
     FOREIGN KEY (position_id) REFERENCES positions(position_id),
-    FOREIGN KEY (hotel_id) REFERENCES hotels(hotel_id)
+    FOREIGN KEY (hotel_id) REFERENCES hotels(hotel_id) ON DELETE SET NULL
 );
 ```
 

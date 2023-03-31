@@ -1,3 +1,5 @@
+from datetime import date
+
 from flask import (Blueprint, redirect, render_template, request, session,
                    url_for)
 
@@ -240,6 +242,9 @@ def rooms():
 
 @views.route("/book-room/<int:hotel_id>/<string:room_number>", methods=["GET", "POST"])
 def book_room(hotel_id=None, room_number=None):
+    booking = None
+    cursor = db.cursor()
+
     query = r"""SELECT chains.chain_name,
                     hotels.country,
                     hotels.province_or_state,
@@ -263,16 +268,36 @@ def book_room(hotel_id=None, room_number=None):
                 ON rooms.view_type = view_types.id
                 WHERE rooms.hotel_id = %s AND rooms.room_number = %s
                 """
-    cursor = db.cursor()
     cursor.execute(query, (hotel_id, room_number))
     room = cursor.fetchone()
+
+    if request.method == "POST":
+        if request.form.get("start-date") != "" and request.form.get("end-date") != "":
+            booking_query = r"""INSERT INTO
+                                bookings (customer_id, hotel_id, room_number, start_date, end_date)
+                                VALUES (%s, %s, %s, %s, %s)
+                                RETURNING booking_id, start_date, end_date;
+                            """
+            cursor.execute(
+                booking_query,
+                (
+                    session.get("user").get("id"),
+                    hotel_id,
+                    room_number,
+                    date.fromisoformat(request.form.get("start-date")),
+                    date.fromisoformat(request.form.get("end-date")),
+                ),
+            )
+            booking = cursor.fetchone()
+            db.commit()
+
     cursor.close()
-    return render_template("book_room.html", session=session, room=room)
+    return render_template(
+        "book_room.html", session=session, hotel_id=hotel_id, room=room, booking=booking
+    )
 
 
-@views.route(
-    "/delete-room/<int:hotel_id>/<string:room_number>", methods=["GET", "POST"]
-)
+@views.route("/delete-room/<int:hotel_id>/<string:room_number>", methods=["POST"])
 def delete_room(hotel_id=None, room_number=None):
     query = r"""DELETE FROM rooms
                     WHERE hotel_id = %s AND room_number = %s
@@ -281,8 +306,7 @@ def delete_room(hotel_id=None, room_number=None):
     cursor = db.cursor()
     cursor.execute(query, (hotel_id, room_number))
     deleted_room = cursor.fetchone()
-    if deleted_room is not None:
-        db.commit()
+    db.commit()
     cursor.close()
     return redirect(url_for("views.rooms"))
 
@@ -390,3 +414,154 @@ def edit_user():
     return render_template(
         "edit_user.html", session=session, user=user, update_success=update_success
     )
+
+
+@views.route("/delete-chain/<int:chain_id>", methods=["POST"])
+def delete_chain(chain_id=None):
+    query = r"""DELETE FROM chains
+                    WHERE chain_id = %s
+                    RETURNING chain_id
+            """
+    cursor = db.cursor()
+    cursor.execute(query, (chain_id,))
+    deleted_chain = cursor.fetchone()
+    db.commit()
+    cursor.close()
+    return redirect(url_for("views.chains"))
+
+
+@views.route("/edit-chain/<int:chain_id>", methods=["GET", "POST"])
+def edit_chain(chain_id=None):
+    update_success = False
+    cursor = db.cursor()
+
+    if request.method == "POST" and request.form.get("chain-name") != "":
+        cursor.execute(
+            r"""UPDATE chains
+                    SET chain_name = %s
+                    WHERE chain_id = %s
+                RETURNING chain_id
+            """,
+            (request.form.get("chain-name"), chain_id),
+        )
+        changed_name = cursor.fetchone()
+        if changed_name is not None:
+            update_success = True
+        db.commit()
+
+    chain_query = r"""SELECT chains.chain_id,
+                            chains.chain_name
+                        FROM chains
+                        WHERE chains.chain_id = %s
+                    """
+
+    offices_query = r"""SELECT chain_offices.street_number,
+                            chain_offices.street_name,
+                            chain_offices.apt_number,
+                            chain_offices.city,
+                            chain_offices.province_or_state,
+                            chain_offices.country,
+                            chain_offices.zip,
+                            chain_offices.id AS office_id
+                        FROM chains
+                        JOIN chain_offices
+                        ON chains.chain_id = chain_offices.chain_id
+                        WHERE chains.chain_id = %s
+                    """
+    phones_query = r"""SELECT chain_phone_numbers.phone_number,
+                            chain_phone_numbers.description,
+                            chain_phone_numbers.id AS phone_id
+                        FROM chains
+                        JOIN chain_phone_numbers
+                        ON chains.chain_id = chain_phone_numbers.chain_id
+                        WHERE chains.chain_id = %s
+                    """
+    emails_query = r"""SELECT chain_email_addresses.email_address,
+                            chain_email_addresses.description,
+                            chain_email_addresses.id AS email_id
+                        FROM chains
+                        JOIN chain_email_addresses
+                        ON chains.chain_id = chain_email_addresses.chain_id
+                        WHERE chains.chain_id = %s
+                    """
+    cursor.execute(chain_query, (chain_id,))
+    chain = cursor.fetchone()
+
+    cursor.execute(offices_query, (chain_id,))
+    offices = cursor.fetchall()
+
+    cursor.execute(phones_query, (chain_id,))
+    phones = cursor.fetchall()
+
+    cursor.execute(emails_query, (chain_id,))
+    emails = cursor.fetchall()
+
+    cursor.close()
+    return render_template(
+        "edit_chain.html",
+        session=session,
+        chain=chain,
+        offices=offices,
+        phones=phones,
+        emails=emails,
+        update_success=update_success,
+    )
+
+
+@views.route("/delete-office/<int:office_id>", methods=["POST"])
+def delete_office(office_id=None):
+    query = r"""DELETE
+                FROM chain_offices
+                WHERE id = %s
+            """
+    cursor = db.cursor()
+    cursor.execute(query, (office_id,))
+    db.commit()
+    cursor.close()
+    return redirect(url_for("views.edit_chain"))
+
+
+@views.route("/edit-office/<int:office_id>", methods=["GET", "POST"])
+def edit_office(office_id=None):
+    pass
+
+
+@views.route("/delete-phone/<int:phone_id>", methods=["POST"])
+def delete_phone(phone_id=None):
+    query = r"""DELETE
+                FROM chain_phone_numbers
+                WHERE id = %s
+            """
+    cursor = db.cursor()
+    cursor.execute(query, (phone_id,))
+    db.commit()
+    cursor.close()
+    return redirect(url_for("views.edit_chain"))
+
+
+@views.route("/edit-phone/<int:phone_id>", methods=["GET", "POST"])
+def edit_phone(phone_id=None):
+    pass
+
+
+@views.route("/delete-email/<int:email_id>", methods=["POST"])
+def delete_email(email_id=None):
+    query = r"""DELETE
+                FROM chain_email_addresses
+                WHERE id = %s
+            """
+    cursor = db.cursor()
+    cursor.execute(query, (email_id,))
+    db.commit()
+    cursor.close()
+    return redirect(url_for("views.edit_chain"))
+
+
+@views.route("/edit-email/<int:email_id>", methods=["GET", "POST"])
+def edit_email(email_id=None):
+    pass
+
+
+@views.route("/edit-room/<int:hotel_id>/<string:room_number>", methods=["GET", "POST"])
+def edit_room(hotel_id=None, room_number=None):
+    pass

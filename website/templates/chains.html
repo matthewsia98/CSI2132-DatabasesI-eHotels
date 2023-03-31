@@ -14,17 +14,45 @@
         <table class="table table-striped">
             <thead>
                 <tr>
+                    <th></th>
                     <th>Chain ID</th>
                     <th>Chain Name</th>
                     <th>Number of Hotels</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
                 {% for chain in chains %}
                     <tr>
+                        <td>
+                            {% if session.get("user").get("type") == "customer" %}
+                                <form action="{{ url_for('views.delete_chain', chain_id=chain[0]) }}"
+                                      method="post">
+                                    <button type="submit" class="btn btn-light btn-sm disabled" disabled>x</button>
+                                </form>
+                            {% else %}
+                                <form action="{{ url_for('views.delete_chain', chain_id=chain[0]) }}"
+                                      method="post">
+                                    <button type="submit" class="btn btn-light btn-sm">x</button>
+                                </form>
+                            {% endif %}
+                        </td>
                         <td>{{ chain[0] }}</td>
                         <td>{{ chain[1] }}</td>
                         <td>{{ chain[2] }}</td>
+                        <td>
+                            {% if session.get("user").get("type") == "customer" %}
+                                <form action="{{ url_for('views.edit_chain', chain_id=chain[0]) }}"
+                                      method="POST">
+                                    <button type="submit" class="btn btn-dark">Edit</button>
+                                </form>
+                            {% else %}
+                                <form action="{{ url_for('views.edit_chain', chain_id=chain[0]) }}"
+                                      method="POST">
+                                    <button type="submit" class="btn btn-dark">Edit</button>
+                                </form>
+                            {% endif %}
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>
