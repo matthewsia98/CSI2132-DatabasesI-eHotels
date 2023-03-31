@@ -1,7 +1,12 @@
 # CSI2132 - Databases I eHotels Project
 
-    Group 77
-    Matthew Sia
+## Group
+
+77
+
+## Members
+
+1. Matthew Sia
 
 ## Setup
 
