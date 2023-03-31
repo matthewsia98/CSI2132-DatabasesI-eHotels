@@ -308,6 +308,34 @@ CREATE OR REPLACE TRIGGER trig_check_delete_manager
     EXECUTE PROCEDURE check_delete_manager();
 ```
 
+#### check_insert_booking trigger
+
+```sql
+CREATE OR REPLACE FUNCTION check_insert_booking() RETURNS TRIGGER as $check_insert_booking$
+    DECLARE
+        is_booking_valid boolean;
+    BEGIN
+        SELECT NEW.start_date >= ANY(
+            SELECT bookings.end_date
+            FROM bookings
+            WHERE bookings.hotel_id = NEW.hotel_id
+                AND bookings.room_number = NEW.room_number
+        ) INTO is_booking_valid;
+
+        IF is_booking_valid THEN
+            RETURN NEW;
+        ELSE
+            RAISE EXCEPTION 'Room is already booked';
+        END IF;
+    END;
+$check_insert_booking$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trig_check_insert_booking
+    BEFORE INSERT ON bookings
+    FOR EACH ROW
+    EXECUTE PROCEDURE check_insert_booking();
+```
+
 #### Insert into `chains` table
 
 ```sql
