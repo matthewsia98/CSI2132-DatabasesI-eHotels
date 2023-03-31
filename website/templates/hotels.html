@@ -15,6 +15,7 @@
             <thead>
                 <tr>
                     <th></th>
+                    <th>Chain Name</th>
                     <th>Hotel ID</th>
                     <th>Street Number</th>
                     <th>Street Name</th>
@@ -33,7 +34,7 @@
                         <td>
                             {% if session.get("user").get("type") == "customer" %}
                                 <form id="delete-hotel"
-                                      action="{{ url_for('views.delete_hotel', hotel_id=hotel[0]) }}"
+                                      action="{{ url_for('views.delete_hotel', hotel_id=hotel[1]) }}"
                                       method="post">
                                     <button form="delete-hotel"
                                             type="submit"
@@ -42,7 +43,7 @@
                                 </form>
                             {% else %}
                                 <form id="delete-hotel"
-                                      action="{{ url_for('views.delete_hotel', hotel_id=hotel[0]) }}"
+                                      action="{{ url_for('views.delete_hotel', hotel_id=hotel[1]) }}"
                                       method="post">
                                     <button form="delete-hotel" type="submit" class="btn btn-light btn-sm">x</button>
                                 </form>
@@ -58,20 +59,24 @@
                         <td>{{ hotel[7] }}</td>
                         <td>{{ hotel[8] }}</td>
                         <td>
+                            {{ hotel[9] }}
+                        </td>
+                        <td>
                             {% if session.get("user").get("type") == "customer" %}
-                                <form id="edit-hotel"
-                                      action="{{ url_for('views.edit_hotel', hotel_id=hotel[0]) }}"
-                                      method="post">
-                                    <button form="edit-hotel"
+                                <form id="view-rooms-hotel-{{ hotel[1] }}"
+                                      action="{{ url_for('views.rooms', chain_id=chain_id, hotel_id=hotel[1]) }}"
+                                      method="get">
+                                    <button form="view-rooms-hotel-{{ hotel[1] }}"
                                             type="submit"
-                                            class="btn btn-dark disabled"
-                                            disabled>Edit</button>
+                                            class="btn btn-dark">
+                                        Rooms
+                                    </button>
                                 </form>
                             {% else %}
-                                <form id="edit-hotel"
-                                      action="{{ url_for('views.edit_hotel', hotel_id=hotel[0]) }}"
-                                      method="post">
-                                    <button form="edit-hotel" type="submit" class="btn btn-dark">
+                                <form id="edit-hotel-{{ hotel[1] }}"
+                                      action="{{ url_for('views.edit_hotel', hotel_id=hotel[1]) }}"
+                                      method="get">
+                                    <button form="edit-hotel-{{ hotel[1] }}" type="submit" class="btn btn-dark">
                                         Edit
                                     </button>
                                 </form>

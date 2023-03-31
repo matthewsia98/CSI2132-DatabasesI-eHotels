@@ -166,13 +166,16 @@
                 <tr>
                     <th></th>
                     <th>Chain</th>
+                    <th>Hotel ID</th>
                     <th>Stars</th>
                     <th># Rooms</th>
                     <th>Country</th>
                     <th>Province/State</th>
                     <th>City</th>
                     <th>Address</th>
-                    <th>Room No.</th>
+                    <th>
+                        Room No.
+                    </th>
                     <th>
                         Capacity
                     </th>
@@ -208,6 +211,9 @@
                         </td>
                         <td>
                             {{ room[0] }}
+                        </td>
+                        <td>
+                            {{ room[-1] }}
                         </td>
                         <td>
                             {{ room[1] }}

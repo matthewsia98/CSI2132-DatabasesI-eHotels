@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Edit User{% endblock %}
 {% block content %}
-    {% if update_success %}<div class="alert alert-success" role="alert">Chain Name updated successfully!</div>{% endif %}
     <div class="d-flex flex-column justify-content-center align-items-center">
         {% if session.get("user").get("type") == "customer" %}
             <form id="name-form"
@@ -62,12 +61,12 @@
                 <tr>
                     <td>
                         {% if session.get("user").get("type") == "customer" %}
-                            <form action="{{ url_for('views.delete_office', office_id=office[-1]) }}"
+                            <form action="{{ url_for('views.delete_office', chain_id=chain[0], office_id=office[-1]) }}"
                                   method="post">
                                 <button type="submit" class="btn btn-light btn-sm disabled" disabled>x</button>
                             </form>
                         {% else %}
-                            <form action="{{ url_for('views.delete_office', office_id=office[-1]) }}"
+                            <form action="{{ url_for('views.delete_office', chain_id=chain[0], office_id=office[-1]) }}"
                                   method="post">
                                 <button type="submit" class="btn btn-light btn-sm">x</button>
                             </form>
@@ -82,13 +81,13 @@
                     <td>{{ office[6] }}</td>
                     <td>
                         {% if session.get("user").get("type") == "customer" %}
-                            <form action="{{ url_for('views.edit_office', office_id=office[-1]) }}"
-                                  method="post">
+                            <form action="{{ url_for('views.edit_office', chain_id=chain[0], office_id=office[-1]) }}"
+                                  method="get">
                                 <button type="submit" class="btn btn-dark disabled" disabled>Edit</button>
                             </form>
                         {% else %}
-                            <form action="{{ url_for('views.edit_office', office_id=office[-1]) }}"
-                                  method="post">
+                            <form action="{{ url_for('views.edit_office', chain_id=chain[0], office_id=office[-1]) }}"
+                                  method="get">
                                 <button type="submit" class="btn btn-dark">Edit</button>
                             </form>
                         {% endif %}
@@ -99,9 +98,7 @@
     </table>
     <br/>
     <hr/>
-    <h3>
-        Phone Numbers
-    </h3>
+    <h3>Phone Numbers</h3>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -122,14 +119,14 @@
                 <tr>
                     <td>
                         {% if session.get("user").get("type") == "customer" %}
-                            <form action="{{ url_for('views.delete_phone', phone_id=phone[-1]) }}"
+                            <form action="{{ url_for('views.delete_phone', chain_id=chain[0], phone_id=phone[-1]) }}"
                                   method="post">
                                 <button type="submit" class="btn btn-light btn-sm disabled" disabled>
                                     x
                                 </button>
                             </form>
                         {% else %}
-                            <form action="{{ url_for('views.delete_phone', phone_id=phone[-1]) }}"
+                            <form action="{{ url_for('views.delete_phone', chain_id=chain[0], phone_id=phone[-1]) }}"
                                   method="post">
                                 <button type="submit" class="btn btn-light btn-sm">
                                     x
@@ -145,15 +142,15 @@
                     </td>
                     <td>
                         {% if session.get("user").get("type") == "customer" %}
-                            <form action="{{ url_for('views.edit_phone', phone_id=phone[-1]) }}"
-                                  method="post">
+                            <form action="{{ url_for('views.edit_phone', chain_id=chain[0], phone_id=phone[-1]) }}"
+                                  method="get">
                                 <button type="submit" class="btn btn-dark disabled" disabled>
                                     Edit
                                 </button>
                             </form>
                         {% else %}
-                            <form action="{{ url_for('views.edit_phone', phone_id=phone[-1]) }}"
-                                  method="post">
+                            <form action="{{ url_for('views.edit_phone', chain_id=chain[0], phone_id=phone[-1]) }}"
+                                  method="get">
                                 <button type="submit" class="btn btn-dark">
                                     Edit
                                 </button>
@@ -189,14 +186,14 @@
                 <tr>
                     <td>
                         {% if session.get("user").get("type") == "customer" %}
-                            <form action="{{ url_for('views.delete_email', email_id=email[-1]) }}"
+                            <form action="{{ url_for('views.delete_email', chain_id=chain[0], email_id=email[-1]) }}"
                                   method="post">
                                 <button type="submit" class="btn btn-light btn-sm disabled" disabled>
                                     x
                                 </button>
                             </form>
                         {% else %}
-                            <form action="{{ url_for('views.delete_email', email_id=email[-1]) }}"
+                            <form action="{{ url_for('views.delete_email', chain_id=chain[0], email_id=email[-1]) }}"
                                   method="post">
                                 <button type="submit" class="btn btn-light btn-sm">
                                     x
@@ -212,15 +209,15 @@
                     </td>
                     <td>
                         {% if session.get("user").get("type") == "customer" %}
-                            <form action="{{ url_for('views.edit_email', email_id=email[-1]) }}"
-                                  method="post">
+                            <form action="{{ url_for('views.edit_email', chain_id=chain[0], email_id=email[-1]) }}"
+                                  method="get">
                                 <button type="submit" class="btn btn-dark disabled" disabled>
                                     Edit
                                 </button>
                             </form>
                         {% else %}
-                            <form action="{{ url_for('views.edit_email', email_id=email[-1]) }}"
-                                  method="post">
+                            <form action="{{ url_for('views.edit_email', chain_id=chain[0], email_id=email[-1]) }}"
+                                  method="get">
                                 <button type="submit" class="btn btn-dark">
                                     Edit
                                 </button>

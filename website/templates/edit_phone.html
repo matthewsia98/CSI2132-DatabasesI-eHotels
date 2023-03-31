@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Edit Chain Phone Number{% endblock %}
+{% block
+    content %}
+    <div class="container text-center">
+        <table class="table table-striped">
+            <tr>
+                <td>Chain ID</td>
+                <td>{{ chain_id }}</td>
+            </tr>
+            <tr>
+                <td>Chain Name</td>
+                <td>{{ chain_name }}</td>
+            </tr>
+        </table>
+    </div>
+    <br />
+    <form action="{{ url_for('views.edit_phone', chain_id=chain_id, phone_id=phone_id) }}"
+          method="post">
+        <div class="form-row">
+            <div class="form-group col">
+                <label for="phone-number">Phone Number</label>
+                <input type="text"
+                       class="form-control"
+                       id="phone-number"
+                       name="phone-number"
+                       value="{{ phone[0] }}"/>
+            </div>
+            <div class="form-group col">
+                <label for="phone-description">Description</label>
+                <input type="text"
+                       class="form-control"
+                       id="phone-description"
+                       name="phone-description"
+                       value="{{ phone[1] }}"/>
+            </div>
+        </div>
+        <br />
+        <div class="container text-center">
+            <button type="submit" class="btn btn-dark">Edit Phone Number</button>
+        </div>
+    </form>
+{% endblock %}

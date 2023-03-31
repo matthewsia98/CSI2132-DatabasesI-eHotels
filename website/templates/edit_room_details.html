@@ -1,0 +1,79 @@
+{% extends "base.html" %} {% block title %}Edit User{% endblock %} {% block
+content %}
+<div class="container text-center">
+  <table class="table table-striped">
+    <tr>
+      <td>Hotel ID</td>
+      <td>{{ hotel_id }}</td>
+    </tr>
+    <tr>
+      <td>Room Number</td>
+      <td>{{ room[0] }}</td>
+    </tr>
+  </table>
+</div>
+<form action="{{ url_for('views.edit_room_details', hotel_id=hotel_id, room_number=room_number) }}" method="post">
+  <div class="form-row">
+    <div class="form-group col">
+      <label for="capacity">Capacity</label>
+      <input
+        type="text"
+        class="form-control"
+        id="capacity"
+        name="capacity"
+        value="{{ room[1] }}"
+      />
+    </div>
+    <div class="form-group col">
+      <label for="price">Price</label>
+      <input
+        type="text"
+        class="form-control"
+        id="price"
+        name="price"
+        value="{{ room[2] }}"
+      />
+    </div>
+        <div class="form-group col">
+        <label for="extensible">Extensible</label>
+        <select id="extensible" class="form-control" name="extensible">
+          <option value="True" {% if room[3] == 1 %} selected {% endif %}>Yes</option>
+          <option value="False" {% if room[3] == 0 %} selected {% endif %}>No</option>
+        </select>
+        </div>
+        <div class="form-group col">
+        <label for="tv">TV</label>
+        <select id="tv" class="form-control" name="tv">
+          <option value="True" {% if room[4] == 1 %} selected {% endif %}>Yes</option>
+          <option value="False" {% if room[4] == 0 %} selected {% endif %}>No</option>
+        </select>
+        </div>
+        <div class="form-group col">
+        <label for="air_condition">Air Condition</label>
+        <select id="air_condition" class="form-control" name="air_condition">
+          <option value="True" {% if room[5] == 1 %} selected {% endif %}>Yes</option>
+          <option value="False" {% if room[5] == 0 %} selected {% endif %}>No</option>
+        </select>
+        </div>
+        <div class="form-group col">
+        <label for="fridge">Fridge</label>
+        <select id="fridge" class="form-control" name="fridge">
+          <option value="True" {% if room[6] == 1 %} selected {% endif %}>Yes</option>
+          <option value="False" {% if room[6] == 0 %} selected {% endif %}>No</option>
+        </select>
+        </div>
+        <div class="form-group col">
+        <label for="view">View</label>
+        <select id="view" class="form-control" name="view">
+            {% for view in views %}
+                <option value="{{ view[0] }}" {% if room[7] == view[1] %} selected {% endif %}>{{ view[1] }}</option>
+            {% endfor %}
+        </select>
+        </div>
+  </div>
+    <br/>
+  <div class="container text-center">
+    <button type="submit" class="btn btn-dark">Edit Room Details</button>
+  </div>
+</form>
+{% endblock %}

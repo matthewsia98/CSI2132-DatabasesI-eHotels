@@ -1,0 +1,97 @@
+{% extends "base.html" %} {% block title %}Edit Chain Office{% endblock %} {%
+block content %}
+<div class="container text-center">
+  <table class="table table-striped">
+    <tr>
+      <td>Chain ID</td>
+      <td>{{ chain_id }}</td>
+    </tr>
+    <tr>
+      <td>Chain Name</td>
+      <td>{{ chain_name }}</td>
+    </tr>
+  </table>
+</div>
+<br />
+<form
+  action="{{ url_for('views.edit_office', chain_id=chain_id, office_id=office_id) }}"
+  method="post"
+>
+  <div class="form-row">
+    <div class="form-group col">
+      <label for="street-number">Street Number</label>
+      <input
+        type="text"
+        class="form-control"
+        id="street-number"
+        name="street-number"
+        value="{{ office[0] }}"
+      />
+    </div>
+    <div class="form-group col">
+      <label for="street-name">Street Name</label>
+      <input
+        type="text"
+        class="form-control"
+        id="street-name"
+        name="street-name"
+        value="{{ office[1] }}"
+      />
+    </div>
+    <div class="form-group col">
+      <label for="apt-number">Apt Number</label>
+      <input
+        type="text"
+        class="form-control"
+        id="apt-number"
+        name="apt-number"
+        value="{{ office[2] }}"
+      />
+    </div>
+    <div class="form-group col">
+      <label for="city">City</label>
+      <input
+        type="text"
+        class="form-control"
+        id="city"
+        name="city"
+        value="{{ office[3] }}"
+      />
+    </div>
+    <div class="form-group col">
+      <label for="province-or-state">Province or State</label>
+      <input
+        type="text"
+        class="form-control"
+        id="province-or-state"
+        name="province-or-state"
+        value="{{ office[4] }}"
+      />
+    </div>
+    <div class="form-group col">
+      <label for="country">Country</label>
+      <input
+        type="text"
+        class="form-control"
+        id="country"
+        name="country"
+        value="{{ office[5] }}"
+      />
+    </div>
+    <div class="form-group col">
+      <label for="zip">Zip</label>
+      <input
+        type="text"
+        class="form-control"
+        id="zip"
+        name="zip"
+        value="{{ office[6] }}"
+      />
+    </div>
+  </div>
+  <br />
+  <div class="container text-center">
+    <button type="submit" class="btn btn-dark">Edit Office Address</button>
+  </div>
+</form>
+{% endblock %}

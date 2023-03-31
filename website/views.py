@@ -1,7 +1,9 @@
+import traceback
 from datetime import date
 
-from flask import (Blueprint, redirect, render_template, request, session,
-                   url_for)
+from flask import (Blueprint, flash, redirect, render_template, request,
+                   session, url_for)
+from psycopg2.errors import IntegrityError, RaiseException
 
 from . import db
 
@@ -14,30 +16,24 @@ def home():
 
 
 @views.route("/chains/")
-@views.route("/chains/<int:chain_id>")
-def chains(chain_id=None):
+def chains():
     query = r"""SELECT chains.chain_id,
                     chains.chain_name,
                     chains.num_hotels
                 FROM chains
             """
     cursor = db.cursor()
-    if chain_id:
-        cursor.execute(
-            query + "WHERE chain_id = %s",
-            (chain_id,),
-        )
-    else:
-        cursor.execute(query)
+    cursor.execute(query)
     chains = cursor.fetchall()
     cursor.close()
     return render_template("chains.html", session=session, chains=chains)
 
 
-@views.route("/hotels/")
-@views.route("/hotels/<int:hotel_id>")
-def hotels(hotel_id=None):
-    query = r"""SELECT hotels.hotel_id,
+@views.route("/hotels/<int:chain_id>", methods=["GET"])
+@views.route("/hotels/", methods=["GET"])
+def hotels(chain_id=None):
+    query = r"""SELECT chains.chain_name,
+                    hotels.hotel_id,
                     hotels.street_number,
                     hotels.street_name,
                     hotels.city,
@@ -45,21 +41,24 @@ def hotels(hotel_id=None):
                     hotels.country,
                     hotels.zip,
                     hotels.stars,
-                    hotels.num_rooms,
-                    hotels.chain_id
+                    hotels.num_rooms
                 FROM hotels
+                JOIN chains
+                ON hotels.chain_id = chains.chain_id
             """
     cursor = db.cursor()
-    if hotel_id:
+    if chain_id:
         cursor.execute(
-            query + "WHERE hotel_id = %s",
-            (hotel_id,),
+            query + "WHERE chains.chain_id = %s" + " ORDER BY hotels.hotel_id",
+            (chain_id,),
         )
     else:
-        cursor.execute(query)
+        cursor.execute(query + " ORDER BY chains.chain_name, hotels.hotel_id")
     hotels = cursor.fetchall()
     cursor.close()
-    return render_template("hotels.html", session=session, hotels=hotels)
+    return render_template(
+        "hotels.html", session=session, hotels=hotels, chain_id=chain_id
+    )
 
 
 @views.route("/employees/")
@@ -96,7 +95,8 @@ def employees(employee_id=None):
 
 
 @views.route("/rooms/", methods=["GET", "POST"])
-def rooms():
+@views.route("/rooms/<int:chain_id>/<int:hotel_id>", methods=["GET", "POST"])
+def rooms(chain_id=None, hotel_id=None):
     cursor = db.cursor()
 
     capacities_query = r"""SELECT DISTINCT capacity
@@ -197,7 +197,8 @@ def rooms():
             )
             + (" AND hotels.city = %s" if request.form.get("city") != "" else "")
             + (" AND rooms.capacity = %s" if request.form.get("capacity") != "" else "")
-            + (" AND rooms.price <= %s" if request.form.get("price") != "" else ""),
+            + (" AND rooms.price <= %s" if request.form.get("price") != "" else "")
+            + " ORDER BY hotels.chain_id, rooms.hotel_id, rooms.room_number",
             tuple(
                 request.form.get(key)
                 for key in request.form
@@ -209,6 +210,8 @@ def rooms():
             "rooms.html",
             session=session,
             form=request.form,
+            chain_id=chain_id,
+            hotel_id=hotel_id,
             rooms=rooms,
             capacities=capacities,
             countries=countries,
@@ -220,12 +223,23 @@ def rooms():
             max_num_rooms=max_num_rooms,
         )
     elif request.method == "GET":
-        cursor.execute(query)
+        if hotel_id:
+            cursor.execute(
+                query
+                + "WHERE rooms.hotel_id = %s ORDER BY hotels.chain_id, rooms.hotel_id, rooms.room_number",
+                (hotel_id,),
+            )
+        else:
+            cursor.execute(
+                query + " ORDER BY hotels.chain_id, rooms.hotel_id, rooms.room_number"
+            )
         rooms = cursor.fetchall()
         return render_template(
             "rooms.html",
             session=session,
             form=None,
+            chain_id=chain_id,
+            hotel_id=hotel_id,
             rooms=rooms,
             capacities=capacities,
             countries=countries,
@@ -272,24 +286,31 @@ def book_room(hotel_id=None, room_number=None):
     room = cursor.fetchone()
 
     if request.method == "POST":
-        if request.form.get("start-date") != "" and request.form.get("end-date") != "":
-            booking_query = r"""INSERT INTO
-                                bookings (customer_id, hotel_id, room_number, start_date, end_date)
-                                VALUES (%s, %s, %s, %s, %s)
-                                RETURNING booking_id, start_date, end_date;
-                            """
-            cursor.execute(
-                booking_query,
-                (
-                    session.get("user").get("id"),
-                    hotel_id,
-                    room_number,
-                    date.fromisoformat(request.form.get("start-date")),
-                    date.fromisoformat(request.form.get("end-date")),
-                ),
-            )
-            booking = cursor.fetchone()
-            db.commit()
+        try:
+            if (
+                request.form.get("start-date") != ""
+                and request.form.get("end-date") != ""
+            ):
+                booking_query = r"""INSERT INTO
+                                    bookings (customer_id, hotel_id, room_number, start_date, end_date)
+                                    VALUES (%s, %s, %s, %s, %s)
+                                    RETURNING booking_id, start_date, end_date;
+                                """
+                cursor.execute(
+                    booking_query,
+                    (
+                        session.get("user").get("id"),
+                        hotel_id,
+                        room_number,
+                        date.fromisoformat(request.form.get("start-date")),
+                        date.fromisoformat(request.form.get("end-date")),
+                    ),
+                )
+                booking = cursor.fetchone()
+                db.commit()
+        except RaiseException:
+            flash("Room is already booked", "danger")
+            db.rollback()
 
     cursor.close()
     return render_template(
@@ -306,6 +327,8 @@ def delete_room(hotel_id=None, room_number=None):
     cursor = db.cursor()
     cursor.execute(query, (hotel_id, room_number))
     deleted_room = cursor.fetchone()
+    if deleted_room is not None:
+        flash("Successfully deleted room", "success")
     db.commit()
     cursor.close()
     return redirect(url_for("views.rooms"))
@@ -418,36 +441,47 @@ def edit_user():
 
 @views.route("/delete-chain/<int:chain_id>", methods=["POST"])
 def delete_chain(chain_id=None):
-    query = r"""DELETE FROM chains
-                    WHERE chain_id = %s
-                    RETURNING chain_id
-            """
-    cursor = db.cursor()
-    cursor.execute(query, (chain_id,))
-    deleted_chain = cursor.fetchone()
-    db.commit()
-    cursor.close()
+    try:
+        query = r"""DELETE FROM chains
+                        WHERE chain_id = %s
+                        RETURNING chain_id
+                """
+        cursor = db.cursor()
+        cursor.execute(query, (chain_id,))
+        deleted_chain = cursor.fetchone()
+        if deleted_chain is not None:
+            flash("Successfully deleted chain", "success")
+
+        db.commit()
+        cursor.close()
+    except IntegrityError:
+        db.rollback()
+        flash("Cannot delete chain", "danger")
+
     return redirect(url_for("views.chains"))
 
 
 @views.route("/edit-chain/<int:chain_id>", methods=["GET", "POST"])
 def edit_chain(chain_id=None):
-    update_success = False
     cursor = db.cursor()
 
     if request.method == "POST" and request.form.get("chain-name") != "":
-        cursor.execute(
-            r"""UPDATE chains
-                    SET chain_name = %s
-                    WHERE chain_id = %s
-                RETURNING chain_id
-            """,
-            (request.form.get("chain-name"), chain_id),
-        )
-        changed_name = cursor.fetchone()
-        if changed_name is not None:
-            update_success = True
-        db.commit()
+        try:
+            cursor.execute(
+                r"""UPDATE chains
+                        SET chain_name = %s
+                        WHERE chain_id = %s
+                    RETURNING chain_id
+                """,
+                (request.form.get("chain-name"), chain_id),
+            )
+            changed_name = cursor.fetchone()
+            if changed_name is not None:
+                flash("Successfully updated chain name", "success")
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            flash("Unable to update chain", "danger")
 
     chain_query = r"""SELECT chains.chain_id,
                             chains.chain_name
@@ -463,26 +497,20 @@ def edit_chain(chain_id=None):
                             chain_offices.country,
                             chain_offices.zip,
                             chain_offices.id AS office_id
-                        FROM chains
-                        JOIN chain_offices
-                        ON chains.chain_id = chain_offices.chain_id
-                        WHERE chains.chain_id = %s
+                        FROM chain_offices
+                        WHERE chain_offices.chain_id = %s
                     """
     phones_query = r"""SELECT chain_phone_numbers.phone_number,
                             chain_phone_numbers.description,
                             chain_phone_numbers.id AS phone_id
-                        FROM chains
-                        JOIN chain_phone_numbers
-                        ON chains.chain_id = chain_phone_numbers.chain_id
-                        WHERE chains.chain_id = %s
+                        FROM chain_phone_numbers
+                        WHERE chain_phone_numbers.chain_id = %s
                     """
     emails_query = r"""SELECT chain_email_addresses.email_address,
                             chain_email_addresses.description,
                             chain_email_addresses.id AS email_id
-                        FROM chains
-                        JOIN chain_email_addresses
-                        ON chains.chain_id = chain_email_addresses.chain_id
-                        WHERE chains.chain_id = %s
+                        FROM chain_email_addresses
+                        WHERE chain_email_addresses.chain_id = %s
                     """
     cursor.execute(chain_query, (chain_id,))
     chain = cursor.fetchone()
@@ -504,12 +532,11 @@ def edit_chain(chain_id=None):
         offices=offices,
         phones=phones,
         emails=emails,
-        update_success=update_success,
     )
 
 
-@views.route("/delete-office/<int:office_id>", methods=["POST"])
-def delete_office(office_id=None):
+@views.route("/delete-office/<int:chain_id>/<int:office_id>", methods=["POST"])
+def delete_office(chain_id=None, office_id=None):
     query = r"""DELETE
                 FROM chain_offices
                 WHERE id = %s
@@ -518,64 +545,571 @@ def delete_office(office_id=None):
     cursor.execute(query, (office_id,))
     db.commit()
     cursor.close()
-    return redirect(url_for("views.edit_chain"))
+    return redirect(url_for("views.edit_chain", chain_id=chain_id))
 
 
-@views.route("/edit-office/<int:office_id>", methods=["GET", "POST"])
-def edit_office(office_id=None):
-    pass
-
-
-@views.route("/delete-phone/<int:phone_id>", methods=["POST"])
-def delete_phone(phone_id=None):
-    query = r"""DELETE
-                FROM chain_phone_numbers
-                WHERE id = %s
-            """
+@views.route("/edit-office/<int:chain_id>/<int:office_id>", methods=["GET", "POST"])
+def edit_office(chain_id=None, office_id=None):
     cursor = db.cursor()
-    cursor.execute(query, (phone_id,))
-    db.commit()
-    cursor.close()
-    return redirect(url_for("views.edit_chain"))
+    if request.method == "GET":
+        query = r"""SELECT chains.chain_name FROM chains WHERE chains.chain_id = %s"""
+        cursor.execute(query, (chain_id,))
+        chain_name = cursor.fetchone()
+        if chain_name is not None:
+            chain_name = chain_name[0]
+
+        query = r"""SELECT chain_offices.street_number,
+                            chain_offices.street_name,
+                            chain_offices.apt_number,
+                            chain_offices.city,
+                            chain_offices.province_or_state,
+                            chain_offices.country,
+                            chain_offices.zip
+                    FROM chain_offices
+                    WHERE chain_offices.id = %s
+                """
+        cursor.execute(query, (office_id,))
+        office = cursor.fetchone()
+        cursor.close()
+        return render_template(
+            "edit_office.html",
+            session=session,
+            chain_id=chain_id,
+            chain_name=chain_name,
+            office_id=office_id,
+            office=office,
+        )
+    elif request.method == "POST":
+        try:
+            query = (
+                "UPDATE chain_offices SET"
+                + (
+                    " street_number = %s,"
+                    if request.form.get("street-number") != ""
+                    else ""
+                )
+                + (
+                    " street_name = %s,"
+                    if request.form.get("street-name") != ""
+                    else ""
+                )
+                + (" apt_number = %s," if request.form.get("apt-number") != "" else "")
+                + (" city = %s," if request.form.get("city") != "" else "")
+                + (
+                    " province_or_state = %s,"
+                    if request.form.get("province-or-state") != ""
+                    else ""
+                )
+                + (" country = %s," if request.form.get("country") != "" else "")
+                + (" zip = %s," if request.form.get("zip") != "" else "")
+            )
+            query = query.strip(",")
+            data = (
+                request.form.get("street-number"),
+                request.form.get("street-name"),
+                request.form.get("apt-number"),
+                request.form.get("city"),
+                request.form.get("province-or-state"),
+                request.form.get("country"),
+                request.form.get("zip"),
+            )
+            data = tuple(filter(lambda x: x != "", data))
+            cursor.execute(query + " WHERE id = %s RETURNING id", data + (office_id,))
+            office_id = cursor.fetchone()
+            db.commit()
+            if office_id is not None:
+                office_id = office_id[0]
+                flash("Successfully updated chain office address", "success")
+        except IntegrityError:
+            db.rollback()
+            flash("Unable to update chain office address", "danger")
+
+        return redirect(url_for("views.edit_chain", chain_id=chain_id))
 
 
-@views.route("/edit-phone/<int:phone_id>", methods=["GET", "POST"])
-def edit_phone(phone_id=None):
-    pass
+@views.route("/delete-phone/<int:chain_id>/<int:phone_id>", methods=["POST"])
+def delete_phone(chain_id=None, phone_id=None):
+    try:
+        query = r"""DELETE
+                    FROM chain_phone_numbers
+                    WHERE id = %s
+                """
+        cursor = db.cursor()
+        cursor.execute(query, (phone_id,))
+        db.commit()
+        cursor.close()
+    except IntegrityError:
+        db.rollback()
+        flash("Unable to delete chain phone number", "danger")
+    return redirect(url_for("views.edit_chain", chain_id=chain_id))
 
 
-@views.route("/delete-email/<int:email_id>", methods=["POST"])
-def delete_email(email_id=None):
-    query = r"""DELETE
-                FROM chain_email_addresses
-                WHERE id = %s
-            """
+@views.route("/edit-phone/<int:chain_id>/<int:phone_id>", methods=["GET", "POST"])
+def edit_phone(chain_id=None, phone_id=None):
     cursor = db.cursor()
-    cursor.execute(query, (email_id,))
-    db.commit()
-    cursor.close()
-    return redirect(url_for("views.edit_chain"))
+    if request.method == "GET":
+        query = r"""SELECT chains.chain_name FROM chains WHERE chains.chain_id = %s"""
+        cursor.execute(query, (chain_id,))
+        chain_name = cursor.fetchone()
+        if chain_name is not None:
+            chain_name = chain_name[0]
+
+        query = r"""SELECT chain_phone_numbers.phone_number,
+                            chain_phone_numbers.description
+                    FROM chain_phone_numbers
+                    WHERE chain_phone_numbers.id = %s
+                """
+        cursor.execute(query, (phone_id,))
+        phone = cursor.fetchone()
+        db.commit()
+
+        cursor.close()
+        return render_template(
+            "edit_phone.html",
+            session=session,
+            chain_id=chain_id,
+            chain_name=chain_name,
+            phone_id=phone_id,
+            phone=phone,
+        )
+    elif request.method == "POST":
+        try:
+            query = (
+                "UPDATE chain_phone_numbers SET"
+                + (
+                    " phone_number = %s,"
+                    if request.form.get("phone-number") != ""
+                    else ""
+                )
+                + (
+                    " description = %s,"
+                    if request.form.get("phone-description") != ""
+                    else ""
+                )
+            )
+            query = query.strip(",")
+            data = (
+                request.form.get("phone-number"),
+                request.form.get("phone-description"),
+            )
+            data = tuple(filter(lambda x: x != "", data))
+            cursor.execute(
+                query + " WHERE id = %s RETURNING id",
+                data + (phone_id,),
+            )
+            phone_id = cursor.fetchone()
+            db.commit()
+            if phone_id is not None:
+                phone_id = phone_id[0]
+                flash("Successfully updated chain phone number", "success")
+        except IntegrityError:
+            db.rollback()
+            flash("Unable to update chain phone number", "danger")
+
+        return redirect(url_for("views.edit_chain", chain_id=chain_id))
 
 
-@views.route("/edit-email/<int:email_id>", methods=["GET", "POST"])
-def edit_email(email_id=None):
-    pass
+@views.route("/delete-email/<int:chain_id>/<int:email_id>", methods=["POST"])
+def delete_email(chain_id=None, email_id=None):
+    try:
+        query = r"""DELETE
+                    FROM chain_email_addresses
+                    WHERE id = %s
+                """
+        cursor = db.cursor()
+        cursor.execute(query, (email_id,))
+        db.commit()
+        cursor.close()
+    except IntegrityError:
+        db.rollback()
+        flash("Unable to delete chain email address", "danger")
+
+    return redirect(url_for("views.edit_chain", chain_id=chain_id))
+
+
+@views.route("/edit-email/<int:chain_id>/<int:email_id>", methods=["GET", "POST"])
+def edit_email(chain_id=None, email_id=None):
+    cursor = db.cursor()
+    if request.method == "GET":
+        query = r"""SELECT chains.chain_name FROM chains WHERE chains.chain_id = %s"""
+        cursor.execute(query, (chain_id,))
+        chain_name = cursor.fetchone()
+        if chain_name is not None:
+            chain_name = chain_name[0]
+
+        query = r"""SELECT chain_email_addresses.email_address,
+                            chain_email_addresses.description
+                    FROM chain_email_addresses
+                    WHERE chain_email_addresses.id = %s
+                """
+        cursor.execute(query, (email_id,))
+        email = cursor.fetchone()
+
+        cursor.close()
+        return render_template(
+            "edit_email.html",
+            session=session,
+            chain_id=chain_id,
+            chain_name=chain_name,
+            email_id=email_id,
+            email=email,
+        )
+    elif request.method == "POST":
+        try:
+            query = (
+                "UPDATE chain_email_addresses SET"
+                + (
+                    " email_address = %s,"
+                    if request.form.get("email-address") != ""
+                    else ""
+                )
+                + (
+                    " description = %s,"
+                    if request.form.get("email-description") != ""
+                    else ""
+                )
+            )
+            query = query.strip(",")
+            data = (
+                request.form.get("email-address"),
+                request.form.get("email-description"),
+            )
+            data = tuple(filter(lambda x: x != "", data))
+            cursor.execute(
+                query + " WHERE id = %s RETURNING id",
+                data + (email_id,),
+            )
+            email_id = cursor.fetchone()
+            db.commit()
+            if email_id is not None:
+                email_id = email_id[0]
+                flash("Successfully updated chain email address", "success")
+        except IntegrityError:
+            db.rollback()
+            flash("Unable to update chain email address", "danger")
+
+        return redirect(url_for("views.edit_chain", chain_id=chain_id))
 
 
 @views.route("/edit-room/<int:hotel_id>/<string:room_number>", methods=["GET", "POST"])
 def edit_room(hotel_id=None, room_number=None):
-    pass
+    cursor = db.cursor()
+    if request.method == "GET":
+        query = r"""SELECT rooms.room_number,
+                        rooms.capacity,
+                        rooms.price,
+                        rooms.extensible,
+                        rooms.tv,
+                        rooms.air_condition,
+                        rooms.fridge,
+                        view_types.description
+                    FROM rooms
+                    JOIN view_types
+                    ON rooms.view_type = view_types.id
+                    WHERE rooms.hotel_id = %s AND rooms.room_number = %s
+                """
+        cursor.execute(query, (hotel_id, room_number))
+        room = cursor.fetchone()
+
+        damages_query = r"""SELECT description FROM room_damages WHERE hotel_id = %s AND room_number = %s"""
+        cursor.execute(damages_query, (hotel_id, room_number))
+        damages = cursor.fetchall()
+        if damages is not None:
+            damages = [damage[0] for damage in damages]
+
+        return render_template(
+            "edit_room.html",
+            session=session,
+            hotel_id=hotel_id,
+            room=room,
+            damages=damages,
+        )
+
+
+@views.route(
+    "/edit-room-details/<int:hotel_id>/<string:room_number>", methods=["GET", "POST"]
+)
+def edit_room_details(hotel_id=None, room_number=None):
+    cursor = db.cursor()
+    if request.method == "GET":
+        query = r"""SELECT rooms.room_number,
+                        rooms.capacity,
+                        rooms.price,
+                        rooms.extensible,
+                        rooms.tv,
+                        rooms.air_condition,
+                        rooms.fridge,
+                        view_types.description
+                    FROM rooms
+                    JOIN view_types
+                    ON rooms.view_type = view_types.id
+                    WHERE rooms.hotel_id = %s AND rooms.room_number = %s
+                """
+        cursor.execute(query, (hotel_id, room_number))
+        room = cursor.fetchone()
+
+        views_query = r"""SELECT id, description FROM view_types"""
+        cursor.execute(views_query)
+        views = cursor.fetchall()
+
+        return render_template(
+            "edit_room_details.html",
+            session=session,
+            hotel_id=hotel_id,
+            room_number=room_number,
+            room=room,
+            views=views,
+        )
+    elif request.method == "POST":
+        try:
+            query = (
+                "UPDATE rooms SET"
+                + (" capacity = %s," if request.form.get("capacity") != "" else "")
+                + (" price = %s," if request.form.get("price") != "" else "")
+                + (" extensible = %s," if request.form.get("extensible") != "" else "")
+                + (" tv = %s," if request.form.get("tv") != "" else "")
+                + (
+                    " air_condition = %s,"
+                    if request.form.get("air-condition") != ""
+                    else ""
+                )
+                + (" fridge = %s," if request.form.get("fridge") != "" else "")
+                + (" view_type = %s," if request.form.get("view") != "" else "")
+            )
+            query = query.strip(",")
+            data = (
+                request.form.get("capacity"),
+                request.form.get("price"),
+                request.form.get("extensible"),
+                request.form.get("tv"),
+                request.form.get("air-condition"),
+                request.form.get("fridge"),
+                request.form.get("view"),
+            )
+            data = tuple(filter(lambda x: x != "", data))
+            cursor.execute(
+                query
+                + " WHERE hotel_id = %s AND room_number = %s RETURNING hotel_id, room_number",
+                data + (hotel_id, room_number),
+            )
+            room = cursor.fetchone()
+            db.commit()
+            if room is not None:
+                flash("Successfully updated room details", "success")
+        except IntegrityError:
+            db.rollback()
+            flash("Unable to update room details", "danger")
+
+        return redirect(
+            url_for("views.edit_room", hotel_id=hotel_id, room_number=room_number)
+        )
 
 
 @views.route("/edit-hotel/<int:hotel_id>", methods=["GET", "POST"])
 def edit_hotel(hotel_id=None):
-    pass
+    cursor = db.cursor()
+    if request.method == "GET":
+        query = r"""SELECT chains.chain_name,
+                            hotels.street_number,
+                            hotels.street_name,
+                            hotels.city,
+                            hotels.province_or_state,
+                            hotels.country,
+                            hotels.zip,
+                            hotels.stars
+                    FROM hotels
+                    JOIN chains
+                    ON hotels.chain_id = chains.chain_id
+                    WHERE hotels.hotel_id = %s
+                """
+        cursor.execute(query, (hotel_id,))
+        hotel = cursor.fetchone()
+
+        phones_query = r"""SELECT hotel_phone_numbers.phone_number,
+                                    hotel_phone_numbers.description,
+                                    hotel_phone_numbers.id AS phone_id
+                            FROM hotel_phone_numbers
+                            WHERE hotel_phone_numbers.hotel_id = %s
+                        """
+        cursor.execute(phones_query, (hotel_id,))
+        phones = cursor.fetchall()
+
+        emails_query = r"""SELECT hotel_email_addresses.email_address,
+                                    hotel_email_addresses.description,
+                                    hotel_email_addresses.id AS email_id
+                            FROM hotel_email_addresses
+                            WHERE hotel_email_addresses.hotel_id = %s
+                        """
+        cursor.execute(emails_query, (hotel_id,))
+        emails = cursor.fetchall()
+
+        cursor.close()
+        return render_template(
+            "edit_hotel.html",
+            session=session,
+            hotel_id=hotel_id,
+            hotel=hotel,
+            phones=phones,
+            emails=emails,
+        )
+    elif request.method == "POST":
+        return redirect(url_for("views.hotels", hotel_id=hotel_id))
+
+
+@views.route("/edit-hotel-address/<int:hotel_id>", methods=["GET", "POST"])
+def edit_hotel_address(hotel_id=None):
+    cursor = db.cursor()
+    if request.method == "GET":
+        query = r"""SELECT chains.chain_name,
+                            hotels.street_number,
+                            hotels.street_name,
+                            hotels.city,
+                            hotels.province_or_state,
+                            hotels.country,
+                            hotels.zip,
+                            hotels.stars
+                    FROM hotels
+                    JOIN chains
+                    ON hotels.chain_id = chains.chain_id
+                    WHERE hotels.hotel_id = %s
+                """
+        cursor.execute(query, (hotel_id,))
+        hotel = cursor.fetchone()
+
+        cursor.close()
+        return render_template(
+            "edit_hotel_address.html", session=session, hotel_id=hotel_id, hotel=hotel
+        )
+    elif request.method == "POST":
+        try:
+            query = (
+                "UPDATE hotels SET"
+                + (
+                    " street_number = %s,"
+                    if request.form.get("street-number") != ""
+                    else ""
+                )
+                + (
+                    " street_name = %s,"
+                    if request.form.get("street-name") != ""
+                    else ""
+                )
+                + (" city = %s," if request.form.get("city") != "" else "")
+                + (
+                    " province_or_state = %s,"
+                    if request.form.get("province-or-state") != ""
+                    else ""
+                )
+                + (" country = %s," if request.form.get("country") != "" else "")
+                + (" zip = %s," if request.form.get("zip") != "" else "")
+            )
+            query = query.strip(",")
+            data = (
+                request.form.get("street-number"),
+                request.form.get("street-name"),
+                request.form.get("city"),
+                request.form.get("province-or-state"),
+                request.form.get("country"),
+                request.form.get("zip"),
+            )
+            data = tuple(filter(lambda x: x != "", data))
+            cursor.execute(
+                query + " WHERE hotel_id = %s RETURNING hotel_id",
+                data + (hotel_id,),
+            )
+            hotel_id = cursor.fetchone()
+            db.commit()
+            if hotel_id is not None:
+                hotel_id = hotel_id[0]
+                flash("Successfully updated hotel address", "success")
+        except IntegrityError:
+            db.rollback()
+            flash("Unable to update hotel address", "danger")
+
+        return redirect(url_for("views.edit_hotel", hotel_id=hotel_id))
 
 
 @views.route("/delete-hotel/<int:hotel_id>", methods=["POST"])
 def delete_hotel(hotel_id=None):
-    cursor = db.cursor()
-    cursor.execute(r"""DELETE FROM hotels WHERE hotel_id = %s""", (hotel_id,))
-    db.commit()
-    cursor.close()
+    try:
+        cursor = db.cursor()
+        cursor.execute(
+            r"""DELETE FROM hotels WHERE hotel_id = %s RETURNING hotel_id""",
+            (hotel_id,),
+        )
+        hotel_id = cursor.fetchone()
+        if hotel_id is not None:
+            hotel_id = hotel_id[0]
+            flash("Successfully deleted hotel", "success")
+        db.commit()
+        cursor.close()
+    except IntegrityError:
+        traceback.print_exc()
+        db.rollback()
+        flash("Unable to delete hotel", "danger")
+
     return redirect(url_for("views.hotels"))
+
+
+@views.route("/edit-hotel-phone/<int:hotel_id>/<int:phone_id>", methods=["GET", "POST"])
+def edit_hotel_phone(hotel_id=None, phone_id=None):
+    if request.method == "GET":
+        return render_template("edit_hotel_phone.html", session=session)
+
+
+@views.route("/delete-hotel-phone/<int:hotel_id>/<int:phone_id>", methods=["POST"])
+def delete_hotel_phone(hotel_id=None, phone_id=None):
+    try:
+        cursor = db.cursor()
+        cursor.execute(
+            r"""DELETE FROM hotel_phone_numbers WHERE id = %s""", (phone_id,)
+        )
+        db.commit()
+        cursor.close()
+    except IntegrityError:
+        traceback.print_exc()
+        db.rollback()
+        flash("Unable to delete hotel phone number", "danger")
+
+    return redirect(url_for("views.edit_hotel", hotel_id=hotel_id))
+
+
+@views.route("/edit-hotel-email/<int:hotel_id>/<int:email_id>", methods=["GET", "POST"])
+def edit_hotel_email(hotel_id=None, email_id=None):
+    pass
+
+
+@views.route("/delete-hotel-email/<int:hotel_id>/<int:email_id>", methods=["POST"])
+def delete_hotel_email(hotel_id=None, email_id=None):
+    try:
+        cursor = db.cursor()
+        cursor.execute(
+            r"""DELETE FROM hotel_email_addresses WHERE id = %s""", (email_id,)
+        )
+        db.commit()
+        cursor.close()
+    except IntegrityError:
+        traceback.print_exc()
+        db.rollback()
+        flash("Unable to delete hotel email address", "danger")
+
+    return redirect(url_for("views.edit_hotel", hotel_id=hotel_id))
+
+
+@views.route("/edit-hotel-stars/<int:hotel_id>", methods=["POST"])
+def edit_hotel_stars(hotel_id=None):
+    cursor = db.cursor()
+    try:
+        cursor.execute(
+            r"""UPDATE hotels SET stars = %s WHERE hotel_id = %s""",
+            (request.form.get("stars"), hotel_id),
+        )
+        db.commit()
+        cursor.close()
+        flash("Successfully updated hotel stars", "success")
+    except IntegrityError:
+        traceback.print_exc()
+        db.rollback()
+        flash("Unable to update hotel stars", "danger")
+
+    return redirect(url_for("views.edit_hotel", hotel_id=hotel_id))

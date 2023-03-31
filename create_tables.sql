@@ -211,7 +211,7 @@ CREATE OR REPLACE VIEW available_rooms_per_area AS
         WHERE current_date < start_date or current_date >= end_date
     )
     GROUP BY hotels.country, hotels.province_or_state, hotels.city
-    ORDER BY hotels.country, hotels.province_or_state, hotels.city
+    ORDER BY hotels.country, hotels.province_or_state, hotels.city;
 
 
 -- View for capacity of all rooms of a specific hotel
@@ -228,7 +228,7 @@ CREATE OR REPLACE VIEW room_capacities AS
     ON hotels.chain_id = chains.chain_id
     JOIN rooms
     ON hotels.hotel_id = rooms.hotel_id
-    ORDER BY chains.chain_name, hotels.hotel_id, rooms.room_number
+    ORDER BY chains.chain_name, hotels.hotel_id, rooms.room_number;
 
 
 -- num_hotels trigger
@@ -304,3 +304,29 @@ CREATE OR REPLACE TRIGGER trig_check_delete_manager
     BEFORE DELETE ON employees
     FOR EACH ROW
     EXECUTE PROCEDURE check_delete_manager();
+
+
+-- check_insert_booking trigger
+CREATE OR REPLACE FUNCTION check_insert_booking() RETURNS TRIGGER as $check_insert_booking$
+    DECLARE
+        is_booking_valid boolean;
+    BEGIN
+        SELECT NEW.start_date >= ANY(
+            SELECT bookings.end_date
+            FROM bookings
+            WHERE bookings.hotel_id = NEW.hotel_id
+                AND bookings.room_number = NEW.room_number
+        ) INTO is_booking_valid;
+        
+        IF is_booking_valid THEN
+            RETURN NEW;
+        ELSE
+            RAISE EXCEPTION 'Room is already booked';
+        END IF;
+    END;
+$check_insert_booking$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trig_check_insert_booking
+    BEFORE INSERT ON bookings
+    FOR EACH ROW 
+    EXECUTE PROCEDURE check_insert_booking();

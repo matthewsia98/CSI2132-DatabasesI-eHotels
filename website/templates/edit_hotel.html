@@ -1,0 +1,154 @@
+{% extends "base.html" %} {% block title %}Edit Hotel Address{% endblock %} {%
+block content %}
+
+<div
+  class="d-flex flex-column justify-content-center align-items-center text-center"
+>
+  <table class="table table-striped">
+    <tr>
+      <td>Chain Name</td>
+      <td>{{ hotel[0] }}</td>
+    </tr>
+    <tr>
+      <td>Hotel ID</td>
+      <td>{{ hotel_id }}</td>
+    </tr>
+  </table>
+  <form
+    id="stars-form"
+    action="{{ url_for('views.edit_hotel_stars', hotel_id=hotel_id) }}"
+    method="post"
+  >
+    <div class="form-row">
+      <div class="form-group text-center">
+        <div class="form-group text-center">
+          <label for="stars">Stars</label>
+          <input
+            type="text"
+            class="form-control text-center"
+            id="stars"
+            name="stars"
+            value="{{ hotel[-1] }}"
+          />
+        </div>
+      </div>
+    </div>
+    <button form="stars-form" type="submit" class="btn btn-primary">
+      Change Stars
+    </button>
+  </form>
+</div>
+<br />
+<hr />
+<h3>Address</h3>
+<hr />
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Street Number</th>
+      <th>Street Name</th>
+      <th>City</th>
+      <th>Province/State</th>
+      <th>Country</th>
+      <th>Zip</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>{{ hotel[1] }}</td>
+      <td>{{ hotel[2] }}</td>
+      <td>{{ hotel[3] }}</td>
+      <td>{{ hotel[4] }}</td>
+      <td>{{ hotel[5] }}</td>
+      <td>{{ hotel[6] }}</td>
+      <td>
+        <form
+          action="{{ url_for('views.edit_hotel_address', hotel_id=hotel_id)
+                    }}"
+          method="get"
+        >
+          <button type="submit" class="btn btn-light btn-sm">Edit</button>
+        </form>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br />
+<hr />
+<h3>Phone Numbers</h3>
+<hr />
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th></th>
+      <th>Phone Number</th>
+      <th>Description</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for phone in phones %}
+    <tr>
+      <td>
+        <form
+          action="{{ url_for('views.delete_hotel_phone', hotel_id=hotel_id, phone_id=phone[-1]) }}"
+          method="post"
+        >
+          <button type="submit" class="btn btn-light btn-sm">x</button>
+        </form>
+      </td>
+      <td>{{ phone[0] }}</td>
+      <td>{{ phone[1] }}</td>
+      <td>
+        <form
+          action="{{ url_for('views.edit_hotel_phone', hotel_id=hotel_id, phone_id=phone[-1]) }}"
+          method="get"
+        >
+          <button type="submit" class="btn btn-light btn-sm">Edit</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<br />
+<hr />
+<h3>Email Addresses</h3>
+<hr />
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th></th>
+      <th>Email Address</th>
+      <th>Description</th>
+      <th></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for email in emails %}
+    <tr>
+      <td>
+        <form
+          action="{{ url_for('views.delete_hotel_email', hotel_id=hotel_id, email_id=email[-1]) }}"
+          method="post"
+        >
+          <button type="submit" class="btn btn-light btn-sm">x</button>
+        </form>
+      </td>
+      <td>{{ email[0] }}</td>
+      <td>{{ email[1] }}</td>
+      <td>
+        <form
+          action="{{ url_for('views.edit_hotel_email', hotel_id=hotel_id, email_id=email[-1]) }}"
+          method="get"
+        >
+          <button type="submit" class="btn btn-light btn-sm">Edit</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

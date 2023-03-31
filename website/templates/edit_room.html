@@ -1,0 +1,64 @@
+{% extends "base.html" %} {% block title %}Edit Room{% endblock %} {% block
+content %}
+
+<div class="container text-center">
+  <table class="table table-striped">
+    <tr>
+      <td>Hotel ID</td>
+      <td>{{ hotel_id }}</td>
+    </tr>
+    <tr>
+      <td>Room Number</td>
+      <td>{{ room[0] }}</td>
+    </tr>
+  </table>
+</div>
+<br />
+<hr />
+<h3>Room Details</h3>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Capacity</th>
+      <th>Price</th>
+      <th>Extensible</th>
+      <th>TV</th>
+      <th>Air Condition</th>
+      <th>Fridge</th>
+      <th>View</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>{{ room[1] }}</td>
+      <td>{{ room[2] }}</td>
+      <td>{{ room[3] }}</td>
+      <td>{{ room[4] }}</td>
+      <td>{{ room[5] }}</td>
+      <td>{{ room[6] }}</td>
+      <td>{{ room[7] }}</td>
+      <td>
+        <form
+          action="{{ url_for('views.edit_room_details', hotel_id=hotel_id, room_number=room[0]) }}"
+          method="get"
+        >
+          <button type="submit" class="btn btn-primary">Edit</button>
+        </form>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<hr />
+<br />
+<hr />
+<h3>Damages</h3>
+<hr />
+<table class="table table-striped">
+  {% for damage in damages %}
+  <tr>
+    <td>{{ damage }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

@@ -11,6 +11,11 @@
             </p>
         </div>
     {% else %}
+        {% if delete_failed %}
+            <div class="alert alert-danger" role="alert">
+                <strong>Failed to delete chain!</strong>
+            </div>
+        {% endif %}
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -42,14 +47,18 @@
                         <td>{{ chain[2] }}</td>
                         <td>
                             {% if session.get("user").get("type") == "customer" %}
-                                <form action="{{ url_for('views.edit_chain', chain_id=chain[0]) }}"
-                                      method="post">
-                                    <button type="submit" class="btn btn-dark disabled" disabled>Edit</button>
+                                <form id="view-hotel-chain-{{ chain[0] }}"
+                                      action="{{ url_for('views.hotels', chain_id=chain[0]) }}"
+                                      method="get">
+                                    <button form="view-hotel-chain-{{ chain[0] }}"
+                                            type="submit"
+                                            class="btn btn-dark">Hotels</button>
                                 </form>
                             {% else %}
-                                <form action="{{ url_for('views.edit_chain', chain_id=chain[0]) }}"
-                                      method="post">
-                                    <button type="submit" class="btn btn-dark">Edit</button>
+                                <form id="edit-chain-{{ chain[0] }}"
+                                      action="{{ url_for('views.edit_chain', chain_id=chain[0]) }}"
+                                      method="get">
+                                    <button form="edit-chain-{{ chain[0] }}" type="submit" class="btn btn-dark">Edit</button>
                                 </form>
                             {% endif %}
                         </td>

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Edit Hotel{% endblock %}
+{% block
+    content %}
+    <div class="container text-center">
+        <table class="table table-striped">
+            <tr>
+                <td>Hotel ID</td>
+                <td>{{ hotel_id }}</td>
+            </tr>
+        </table>
+    </div>
+    <br />
+    <form action="{{ url_for('views.edit_hotel_address', hotel_id=hotel_id) }}"
+          method="post">
+        <div class="form-row">
+            <div class="form-group col">
+                <label for="street-number">Street Number</label>
+                <input type="text"
+                       class="form-control"
+                       name="street-number"
+                       id="street-number"
+                       value="{{ hotel[0] }}"/>
+            </div>
+            <div class="form-group col">
+                <label for="street-name">Street Name</label>
+                <input type="text"
+                       class="form-control"
+                       name="street-name"
+                       id="street-name"
+                       value="{{ hotel[1] }}"/>
+            </div>
+            <div class="form-group col">
+                <label for="city">City</label>
+                <input type="text"
+                       class="form-control"
+                       name="city"
+                       id="city"
+                       value="{{ hotel[2] }}"/>
+            </div>
+            <div class="form-group col">
+                <label for="province-or-state">Province/State</label>
+                <input type="text"
+                       class="form-control"
+                       name="province-or-state"
+                       id="province-or-state"
+                       value="{{ hotel[3] }}"/>
+            </div>
+            <div class="form-group col">
+                <label for="country">Country</label>
+                <input type="text"
+                       class="form-control"
+                       name="country"
+                       id="country"
+                       value="{{ hotel[4] }}"/>
+            </div>
+            <div class="form-group col">
+                <label for="zip">Zip</label>
+                <input type="text"
+                       class="form-control"
+                       name="zip"
+                       id="zip"
+                       value="{{ hotel[5] }}"/>
+            </div>
+        </div>
+        <div class="container text-center">
+            <button type="submit" class="btn btn-dark">Edit Hotel Address</button>
+        </div>
+    </form>
+{% endblock %}
