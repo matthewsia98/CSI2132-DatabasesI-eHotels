@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS rooms (
     CHECK (price > 0),
     PRIMARY KEY (hotel_id, room_number),
     FOREIGN KEY (hotel_id) REFERENCES hotels(hotel_id) ON DELETE CASCADE,
-    FOREIGN KEY (view_type) REFERENCES view_types(id)
+    FOREIGN KEY (view_type) REFERENCES view_types(id) ON DELETE SET NULL
 );
 ```
 
@@ -161,7 +161,7 @@ CREATE TABLE IF NOT EXISTS employees (
     zip TEXT NOT NULL,
     position_id INTEGER,
     hotel_id INTEGER,
-    FOREIGN KEY (position_id) REFERENCES positions(position_id),
+    FOREIGN KEY (position_id) REFERENCES positions(position_id) ON DELETE SET NULL,
     FOREIGN KEY (hotel_id) REFERENCES hotels(hotel_id) ON DELETE SET NULL
 );
 ```
@@ -203,8 +203,8 @@ CREATE TABLE IF NOT EXISTS bookings (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     PRIMARY KEY (booking_id),
-    FOREIGN KEY (customer_id) REFERENCES customers (customer_id),
-    FOREIGN KEY (hotel_id, room_number) REFERENCES rooms (hotel_id, room_number)
+    FOREIGN KEY (customer_id) REFERENCES customers (customer_id) ON DELETE CASCADE,
+    FOREIGN KEY (hotel_id, room_number) REFERENCES rooms (hotel_id, room_number) ON DELETE CASCADE
 );
 ```
 
@@ -221,9 +221,9 @@ CREATE TABLE IF NOT EXISTS rentals (
     end_date DATE,
     paid_amount NUMERIC(8, 2),
     PRIMARY KEY (rental_id),
-    FOREIGN KEY (customer_id) REFERENCES customers (customer_id),
-    FOREIGN KEY (booking_id) REFERENCES bookings (booking_id),
-    FOREIGN KEY (hotel_id, room_number) REFERENCES rooms (hotel_id, room_number)
+    FOREIGN KEY (customer_id) REFERENCES customers (customer_id) ON DELETE CASCADE,
+    FOREIGN KEY (booking_id) REFERENCES bookings (booking_id) ON DELETE SET NULL,
+    FOREIGN KEY (hotel_id, room_number) REFERENCES rooms (hotel_id, room_number) ON DELETE CASCADE
 );
 ```
 

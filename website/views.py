@@ -565,3 +565,17 @@ def edit_email(email_id=None):
 @views.route("/edit-room/<int:hotel_id>/<string:room_number>", methods=["GET", "POST"])
 def edit_room(hotel_id=None, room_number=None):
     pass
+
+
+@views.route("/edit-hotel/<int:hotel_id>", methods=["GET", "POST"])
+def edit_hotel(hotel_id=None):
+    pass
+
+
+@views.route("/delete-hotel/<int:hotel_id>", methods=["POST"])
+def delete_hotel(hotel_id=None):
+    cursor = db.cursor()
+    cursor.execute(r"""DELETE FROM hotels WHERE hotel_id = %s""", (hotel_id,))
+    db.commit()
+    cursor.close()
+    return redirect(url_for("views.hotels"))

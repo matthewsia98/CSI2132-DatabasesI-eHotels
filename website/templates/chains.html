@@ -43,12 +43,12 @@
                         <td>
                             {% if session.get("user").get("type") == "customer" %}
                                 <form action="{{ url_for('views.edit_chain', chain_id=chain[0]) }}"
-                                      method="POST">
-                                    <button type="submit" class="btn btn-dark">Edit</button>
+                                      method="post">
+                                    <button type="submit" class="btn btn-dark disabled" disabled>Edit</button>
                                 </form>
                             {% else %}
                                 <form action="{{ url_for('views.edit_chain', chain_id=chain[0]) }}"
-                                      method="POST">
+                                      method="post">
                                     <button type="submit" class="btn btn-dark">Edit</button>
                                 </form>
                             {% endif %}
