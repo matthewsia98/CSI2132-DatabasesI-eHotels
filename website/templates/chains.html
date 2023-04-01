@@ -16,7 +16,7 @@
                 <strong>Failed to delete chain!</strong>
             </div>
         {% endif %}
-        <table class="table table-striped">
+        <table class="table table-striped table-bordered">
             <thead>
                 <tr>
                     <th></th>
@@ -29,14 +29,16 @@
             <tbody>
                 {% for chain in chains %}
                     <tr>
-                        <td>
+                        <td class="text-center">
                             {% if session.get("user").get("type") == "customer" %}
                                 <form action="{{ url_for('views.delete_chain', chain_id=chain[0]) }}"
+                                      class="text-center"
                                       method="post">
                                     <button type="submit" class="btn btn-light btn-sm disabled" disabled>x</button>
                                 </form>
                             {% else %}
                                 <form action="{{ url_for('views.delete_chain', chain_id=chain[0]) }}"
+                                      class="text-center"
                                       method="post">
                                     <button type="submit" class="btn btn-light btn-sm">x</button>
                                 </form>
@@ -49,6 +51,7 @@
                             {% if session.get("user").get("type") == "customer" %}
                                 <form id="view-hotel-chain-{{ chain[0] }}"
                                       action="{{ url_for('views.hotels', chain_id=chain[0]) }}"
+                                      class="text-center"
                                       method="get">
                                     <button form="view-hotel-chain-{{ chain[0] }}"
                                             type="submit"
@@ -57,6 +60,7 @@
                             {% else %}
                                 <form id="edit-chain-{{ chain[0] }}"
                                       action="{{ url_for('views.edit_chain', chain_id=chain[0]) }}"
+                                      class="text-center"
                                       method="get">
                                     <button form="edit-chain-{{ chain[0] }}" type="submit" class="btn btn-dark">Edit</button>
                                 </form>

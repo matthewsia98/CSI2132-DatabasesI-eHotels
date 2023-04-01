@@ -1147,6 +1147,7 @@ def bookings():
                         bookings.end_date,
                         customers.first_name,
                         customers.last_name,
+                        rentals.rental_id,
                         bookings.booking_id
                 FROM bookings
                 JOIN customers
@@ -1155,6 +1156,8 @@ def bookings():
                 ON bookings.hotel_id = hotels.hotel_id
                 JOIN chains
                 ON hotels.chain_id = chains.chain_id
+                LEFT OUTER JOIN rentals
+                ON bookings.booking_id = rentals.booking_id
             """
 
     if request.method == "GET":
@@ -1398,8 +1401,9 @@ def rentals(rental_id=None):
     )
 
 
-@views.route("/view-one")
+@views.route("/view-one", methods=["GET", "POST"])
 def view_one():
+    form = None
     query = r"""SELECT country,
                         province_or_state,
                         city,
@@ -1407,11 +1411,68 @@ def view_one():
                 FROM available_rooms_per_area
             """
     cursor = db.cursor()
-    cursor.execute(query)
-    rooms = cursor.fetchall()
-    cursor.close()
 
-    return render_template("view_one.html", rooms=rooms)
+    countries_query = r"""SELECT DISTINCT country
+                            FROM hotels
+                            ORDER BY country
+                        """
+    cursor.execute(countries_query)
+    countries = cursor.fetchall()
+    countries = [country[0] for country in countries]
+
+    provinces_or_states_query = r"""SELECT DISTINCT province_or_state
+                                    FROM hotels
+                                    ORDER BY province_or_state
+                                """
+    cursor.execute(provinces_or_states_query)
+    provinces_or_states = cursor.fetchall()
+    provinces_or_states = [
+        province_or_state[0] for province_or_state in provinces_or_states
+    ]
+
+    cities_query = r"""SELECT DISTINCT city
+                        FROM hotels
+                        ORDER BY city
+                    """
+    cursor.execute(cities_query)
+    cities = cursor.fetchall()
+    cities = [city[0] for city in cities]
+
+    if request.method == "GET":
+        cursor.execute(query)
+        rooms = cursor.fetchall()
+    elif request.method == "POST":
+        form = request.form
+        data = (
+            request.form.get("country"),
+            request.form.get("province-or-state"),
+            request.form.get("city"),
+        )
+        data = tuple(filter(lambda x: x is not None and x != "", data))
+
+        cursor.execute(
+            query
+            + " WHERE 1=1"
+            + (" AND country = %s" if request.form.get("country") else "")
+            + (
+                " AND province_or_state = %s"
+                if request.form.get("province-or-state")
+                else ""
+            )
+            + (" AND city = %s" if request.form.get("city") else ""),
+            data,
+        )
+        rooms = cursor.fetchall()
+
+    cursor.close()
+    return render_template(
+        "view_one.html",
+        form=form,
+        countries=countries,
+        provinces_or_states=provinces_or_states,
+        cities=cities,
+        rooms=rooms,
+    )
 
 
 @views.route("/view-two/", methods=["GET", "POST"])
@@ -1426,6 +1487,7 @@ def view_two(hotel_id=None):
                 FROM room_capacities
             """
     cursor = db.cursor()
+
     if request.method == "GET":
         cursor.execute(query)
         capacities = cursor.fetchall()
@@ -1434,4 +1496,7 @@ def view_two(hotel_id=None):
         capacities = cursor.fetchall()
 
     cursor.close()
-    return render_template("view_two.html", capacities=capacities)
+    return render_template(
+        "view_two.html",
+        capacities=capacities,
+    )

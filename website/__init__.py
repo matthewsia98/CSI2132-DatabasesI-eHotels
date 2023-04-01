@@ -8,10 +8,11 @@ from flask import Flask
 # DB_URL = os.environ.get("EHOTELS_DATABASE_URL")
 # db = SQLAlchemy()
 
+EHOTELS_DB_HOST = os.environ.get("EHOTELS_DB_HOST")
 EHOTELS_DB_USER = os.environ.get("EHOTELS_DB_USER")
 EHOTELS_DB_PASSWORD = os.environ.get("EHOTELS_DB_PASSWORD")
 db = psycopg2.connect(
-    host="localhost",
+    host=EHOTELS_DB_HOST,
     port=5432,
     dbname="ehotels",
     user=EHOTELS_DB_USER,
