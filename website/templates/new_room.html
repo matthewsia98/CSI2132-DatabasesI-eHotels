@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}New Room{% endblock %}
+{% block
+    content %}
+    <br />
+    <div class="d-flex justify-content-center align-items-center text-center">
+        <form action="{{ url_for('views.new_room') }}" method="post">
+            <div class="form-row">
+                <div class="form-group col">
+                    <label for="hotel-id">Hotel ID</label>
+                    <input type="text"
+                           class="form-control text-center"
+                           id="hotel-id"
+                           name="hotel-id"/>
+                </div>
+                <div class="form-group col">
+                    <label for="room-number">Room Number</label>
+                    <input type="text"
+                           class="form-control text-center"
+                           id="room-number"
+                           name="room-number"/>
+                </div>
+                <div class="form-group col">
+                    <label for="view-type">View</label>
+                    <select id="view-type" class="form-control text-center" name="view-type">
+                        <option selected>
+                        </option>
+                        {% for view in views %}
+                            <option value="{{ view[0] }}">
+                                {{ view[1] }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col">
+                    <label for="capacity">Capacity</label>
+                    <input type="text"
+                           class="form-control text-center"
+                           id="capacity"
+                           name="capacity"/>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col">
+                    <label for="extensible">Extensible</label>
+                    <select id="extensible" class="form-control text-center" name="extensible">
+                        <option value="True" selected>
+                            True
+                        </option>
+                        <option value="False">
+                            False
+                        </option>
+                    </select>
+                </div>
+                <div class="form-group col">
+                    <label for="tv">TV</label>
+                    <select id="tv" class="form-control text-center" name="tv">
+                        <option value="True" selected>
+                            True
+                        </option>
+                        <option value="False">
+                            False
+                        </option>
+                    </select>
+                </div>
+                <div class="form-group col">
+                    <label for="air-condition">Air Condition</label>
+                    <select id="air-condition"
+                            class="form-control text-center"
+                            name="air-condition">
+                        <option value="True" selected>
+                            True
+                        </option>
+                        <option value="False">
+                            False
+                        </option>
+                    </select>
+                </div>
+                <div class="form-group col">
+                    <label for="fridge">Fridge</label>
+                    <select id="fridge" class="form-control text-center" name="fridge">
+                        <option value="True" selected>
+                            True
+                        </option>
+                        <option value="False">
+                            False
+                        </option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row d-flex justify-content-center align-items-center">
+                <div class="form-group">
+                    <label for="price">Price</label>
+                    <input type="number"
+                           class="form-control text-center"
+                           id="price"
+                           name="price"/>
+                </div>
+            </div>
+            <br/>
+            <button type="submit" class="btn btn-primary">Add Room</button>
+        </form>
+    </div>
+{% endblock %}

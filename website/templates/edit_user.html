@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Edit User{% endblock %}
 {% block content %}
-    {% if update_success %}<div class="alert alert-success" role="alert">User updated successfully!</div>{% endif %}
     <form action="/edit-user" method="post">
         <div class="form-row">
             <div class="form-group col">

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}New Hotel{% endblock %}
+{% block
+    content %}
+    <br />
+    <div class="d-flex justify-content-center align-items-center text-center">
+        <form action="{{ url_for('views.new_hotel') }}" method="post">
+            <div class="form-row d-flex justify-content-center">
+                <div class="form-group col-4">
+                    <label for="chain-id">Chain</label>
+                    <select id="chain-id" class="form-control text-center">
+                        <option selected>
+                        </option>
+                        {% for chain in chains %}
+                            <option value="{{ chain[0] }}">
+                                {{ chain[1] }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col">
+                    <label for="street-number">Street Number</label>
+                    <input type="text"
+                           class="form-control text-center"
+                           id="street-number"
+                           name="street-number"/>
+                </div>
+                <div class="form-group col">
+                    <label for="street-name">Street Name</label>
+                    <input type="text"
+                           class="form-control text-center"
+                           id="street-name"
+                           name="street-name"/>
+                </div>
+                <div class="form-group col">
+                    <label for="zip">Zip</label>
+                    <input type="text" class="form-control text-center" id="zip" name="zip"/>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col">
+                    <label for="city">City</label>
+                    <input type="text" class="form-control text-center" id="city" name="city"/>
+                </div>
+                <div class="form-group col">
+                    <label for="province-or-state">Province/State</label>
+                    <input type="text"
+                           class="form-control text-center"
+                           id="province-or-state"
+                           name="province-or-state"/>
+                </div>
+                <div class="form-group col">
+                    <label for="country">Country</label>
+                    <input type="text"
+                           class="form-control text-center"
+                           id="country"
+                           name="country"/>
+                </div>
+            </div>
+            <div class="form-row d-flex justify-content-center">
+                <div class="form-group">
+                    <label for="stars">Stars</label>
+                    <select id="stars" class="form-control col">
+                        <option selected>
+                        </option>
+                        <option value="1">
+                            1
+                        </option>
+                        <option value="2">
+                            2
+                        </option>
+                        <option value="3">
+                            3
+                        </option>
+                        <option value="4">
+                            4
+                        </option>
+                        <option value="5">
+                            5
+                        </option>
+                    </select>
+                </div>
+            </div>
+            <br/>
+            <button type="submit" class="btn btn-primary">Add Hotel</button>
+        </form>
+    </div>
+{% endblock %}

@@ -277,5 +277,16 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% if session.get("user").get("type") == "employee" %}
+            <br/>
+            <div class="container text-center">
+                <form action="/new-room" method="get">
+                    <button type="submit" class="btn btn-primary">
+                        New Room
+                    </button>
+                </form>
+            </div>
+            <br/>
+        {% endif %}
     {% endif %}
 {% endblock %}

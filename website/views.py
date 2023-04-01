@@ -21,6 +21,7 @@ def chains():
                     chains.chain_name,
                     chains.num_hotels
                 FROM chains
+                ORDER BY chain_id
             """
     cursor = db.cursor()
     cursor.execute(query)
@@ -357,44 +358,45 @@ def delete_room(hotel_id=None, room_number=None):
 
 @views.route("/edit-user/", methods=["GET", "POST"])
 def edit_user():
-    update_success = False
     cursor = db.cursor()
-    if session.get("user").get("type") == "customer":
-        customer_query = r"""SELECT customers.ssn,
-                                    customers.first_name,
-                                    customers.middle_initial,
-                                    customers.last_name,
-                                    customers.street_number,
-                                    customers.street_name,
-                                    customers.apt_number,
-                                    customers.city,
-                                    customers.province_or_state,
-                                    customers.country,
-                                    customers.zip
-                                FROM customers
-                                WHERE customer_id = %s
-                        """
-        cursor.execute(customer_query, (session.get("user").get("id"),))
-        user = cursor.fetchone()
-    elif session.get("user").get("type") == "employee":
-        employee_query = r"""SELECT employees.ssn,
-                                    employees.first_name,
-                                    employees.middle_initial,
-                                    employees.last_name,
-                                    employees.street_number,
-                                    employees.street_name,
-                                    employees.apt_number,
-                                    employees.city,
-                                    employees.province_or_state,
-                                    employees.country,
-                                    employees.zip
-                                FROM employees
-                                WHERE employee_id = %s
-                        """
-        cursor.execute(employee_query, (session.get("user").get("id"),))
-        user = cursor.fetchone()
-
-    if request.method == "POST":
+    if request.method == "GET":
+        if session.get("user").get("type") == "customer":
+            customer_query = r"""SELECT customers.ssn,
+                                        customers.first_name,
+                                        customers.middle_initial,
+                                        customers.last_name,
+                                        customers.street_number,
+                                        customers.street_name,
+                                        customers.apt_number,
+                                        customers.city,
+                                        customers.province_or_state,
+                                        customers.country,
+                                        customers.zip
+                                    FROM customers
+                                    WHERE customer_id = %s
+                            """
+            cursor.execute(customer_query, (session.get("user").get("id"),))
+            user = cursor.fetchone()
+        elif session.get("user").get("type") == "employee":
+            employee_query = r"""SELECT employees.ssn,
+                                        employees.first_name,
+                                        employees.middle_initial,
+                                        employees.last_name,
+                                        employees.street_number,
+                                        employees.street_name,
+                                        employees.apt_number,
+                                        employees.city,
+                                        employees.province_or_state,
+                                        employees.country,
+                                        employees.zip
+                                    FROM employees
+                                    WHERE employee_id = %s
+                            """
+            cursor.execute(employee_query, (session.get("user").get("id"),))
+            user = cursor.fetchone()
+            cursor.close()
+            return render_template("edit_user.html", session=session, user=user)
+    elif request.method == "POST":
         query = (
             (
                 "UPDATE employees SET"
@@ -451,13 +453,10 @@ def edit_user():
         )
         result = cursor.fetchone()
         if result is not None:
-            update_success = True
+            flash("Successfully updated user", "success")
         db.commit()
-
-    cursor.close()
-    return render_template(
-        "edit_user.html", session=session, user=user, update_success=update_success
-    )
+        cursor.close()
+        return redirect(url_for("views.edit_user"))
 
 
 @views.route("/delete-chain/<int:chain_id>", methods=["POST"])
@@ -1495,8 +1494,115 @@ def view_two(hotel_id=None):
         cursor.execute(query + " WHERE hotel_id = %s", (request.form.get("hotel-id"),))
         capacities = cursor.fetchall()
 
+    db.commit()
     cursor.close()
     return render_template(
         "view_two.html",
         capacities=capacities,
     )
+
+
+@views.route("/new-chain/", methods=["GET", "POST"])
+def new_chain():
+    if request.method == "POST":
+        if request.form.get("chain-name") is None:
+            flash("Chain Name cannot be empty", "danger")
+        else:
+            try:
+                cursor = db.cursor()
+                query = r"""INSERT INTO chains (chain_name)
+                            VALUES (%s)
+                            RETURNING chain_id
+                        """
+                cursor.execute(query, (request.form.get("chain-name"),))
+                chain_id = cursor.fetchone()
+                if chain_id is not None:
+                    flash("Successfully added chain", "success")
+                db.commit()
+                cursor.close()
+            except IntegrityError:
+                flash("Unable to add chain", "danger")
+                db.rollback()
+
+    return render_template("new_chain.html", session=session)
+
+
+@views.route("/new-room/", methods=["GET", "POST"])
+def new_room():
+    cursor = db.cursor()
+    views_query = r"""SELECT DISTINCT id, description FROM view_types ORDER BY id"""
+    cursor.execute(views_query)
+    views = cursor.fetchall()
+
+    if request.method == "POST":
+        try:
+            query = r"""INSERT INTO rooms
+                        (hotel_id, room_number, capacity, price, view_type, extensible, tv, air_condition, fridge)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING hotel_id, room_number
+                    """
+            cursor.execute(
+                query,
+                (
+                    request.form.get("hotel-id"),
+                    request.form.get("room-number"),
+                    request.form.get("capacity"),
+                    request.form.get("price"),
+                    request.form.get("view-type"),
+                    request.form.get("extensible"),
+                    request.form.get("tv"),
+                    request.form.get("air-condition"),
+                    request.form.get("fridge"),
+                ),
+            )
+            room = cursor.fetchone()
+            if room is not None:
+                flash("Successfully added room", "success")
+
+            db.commit()
+            cursor.close()
+        except IntegrityError:
+            db.rollback()
+            flash("Unable to add room", "danger")
+
+    return render_template("new_room.html", session=session, views=views)
+
+
+@views.route("/new-hotel/", methods=["GET", "POST"])
+def new_hotel():
+    cursor = db.cursor()
+    chains_query = (
+        r"""SELECT DISTINCT chain_id, chain_name FROM chains ORDER BY chain_id"""
+    )
+    cursor.execute(chains_query)
+    chains = cursor.fetchall()
+
+    if request.method == "POST":
+        query = r"""INSERT INTO hotels
+                    (street_number, street_name, city, province_or_state, country, zip, stars, chain_id)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING hotel_id
+                """
+        try:
+            cursor.execute(
+                query,
+                (
+                    request.form.get("street-number"),
+                    request.form.get("street-name"),
+                    request.form.get("city"),
+                    request.form.get("province-or-state"),
+                    request.form.get("country"),
+                    request.form.get("zip"),
+                    request.form.get("stars"),
+                    request.form.get("chain-id"),
+                ),
+            )
+            hotel_id = cursor.fetchone()
+            if hotel_id is not None:
+                flash("Successfully added hotel", "success")
+            cursor.close()
+        except IntegrityError:
+            db.rollback()
+            flash("Unable to add hotel", "danger")
+
+    return render_template("new_hotel.html", session=session, chains=chains)

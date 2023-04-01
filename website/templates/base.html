@@ -61,9 +61,6 @@
           <button type="submit" class="btn btn-light">
             {{ session.get("user").get("type") }} {{
             session.get("user").get("id") }}
-            <br />
-            {{ session.get("user").get("first_name") }} {{
-            session.get("user").get("last_name") }}
           </button>
         </form>
         {% endif %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}New Chain{% endblock %}
+{% block
+    content %}
+    <br />
+    <div class="d-flex justify-content-center align-items-center text-center">
+        <form action="{{ url_for('views.new_chain') }}" method="post">
+            <div class="form-group">
+                <label for="chain-name">Chain Name</label>
+                <input type="text"
+                       class="form-control text-center"
+                       id="chain-name"
+                       name="chain-name"/>
+            </div>
+            <br/>
+            <button type="submit" class="btn btn-primary">Add Chain</button>
+        </form>
+    </div>
+{% endblock %}
