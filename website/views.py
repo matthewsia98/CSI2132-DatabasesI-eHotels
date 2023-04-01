@@ -309,23 +309,26 @@ def book_room(hotel_id=None, room_number=None):
                 request.form.get("start-date") != ""
                 and request.form.get("end-date") != ""
             ):
-                booking_query = r"""INSERT INTO
-                                    bookings (customer_id, hotel_id, room_number, start_date, end_date)
-                                    VALUES (%s, %s, %s, %s, %s)
-                                    RETURNING booking_id, start_date, end_date;
-                                """
-                cursor.execute(
-                    booking_query,
-                    (
-                        session.get("user").get("id"),
-                        hotel_id,
-                        room_number,
-                        date.fromisoformat(request.form.get("start-date")),
-                        date.fromisoformat(request.form.get("end-date")),
-                    ),
-                )
-                booking = cursor.fetchone()
-                db.commit()
+                if request.form.get("end-date") < request.form.get("start-date"):
+                    flash("End Date must follow Start Date", "danger")
+                else:
+                    booking_query = r"""INSERT INTO
+                                        bookings (customer_id, hotel_id, room_number, start_date, end_date)
+                                        VALUES (%s, %s, %s, %s, %s)
+                                        RETURNING booking_id, start_date, end_date;
+                                    """
+                    cursor.execute(
+                        booking_query,
+                        (
+                            session.get("user").get("id"),
+                            hotel_id,
+                            room_number,
+                            date.fromisoformat(request.form.get("start-date")),
+                            date.fromisoformat(request.form.get("end-date")),
+                        ),
+                    )
+                    booking = cursor.fetchone()
+                    db.commit()
         except RaiseException:
             flash("Room is already booked. Try different dates", "danger")
             db.rollback()
@@ -1131,3 +1134,264 @@ def edit_hotel_stars(hotel_id=None):
         flash("Unable to update hotel stars", "danger")
 
     return redirect(url_for("views.edit_hotel", hotel_id=hotel_id))
+
+
+@views.route("/bookings/", methods=["GET", "POST"])
+def bookings():
+    form = None
+    cursor = db.cursor()
+    query = r"""SELECT chains.chain_name,
+                        bookings.hotel_id,
+                        bookings.room_number,
+                        bookings.start_date,
+                        bookings.end_date,
+                        customers.first_name,
+                        customers.last_name,
+                        bookings.booking_id
+                FROM bookings
+                JOIN customers
+                ON bookings.customer_id = customers.customer_id
+                JOIN hotels
+                ON bookings.hotel_id = hotels.hotel_id
+                JOIN chains
+                ON hotels.chain_id = chains.chain_id
+            """
+
+    if request.method == "GET":
+        cursor.execute(query)
+        bookings = cursor.fetchall()
+    elif request.method == "POST":
+        form = request.form
+        data = (
+            request.form.get("first-name"),
+            request.form.get("last-name"),
+        )
+        data = tuple(filter(lambda x: x != "", data))
+        data = tuple((f"%{x}%",) for x in data)
+
+        cursor.execute(
+            query
+            + " WHERE 1=1"
+            + (
+                " AND customers.first_name ILIKE %s"
+                if request.form.get("first-name") != ""
+                else ""
+            )
+            + (
+                " AND customers.last_name ILIKE %s"
+                if request.form.get("last-name") != ""
+                else ""
+            ),
+            data,
+        )
+        bookings = cursor.fetchall()
+
+    cursor.close()
+    return render_template(
+        "bookings.html", session=session, form=form, bookings=bookings
+    )
+
+
+@views.route("/rent/")
+@views.route("/rent/<string:booking_id>", methods=["GET", "POST"])
+@views.route(
+    "/rent/<string:customer_ssn>/<int:hotel_id>/<string:room_number>/<float:price>/<string:start_date>/<string:end_date>",
+    methods=["GET", "POST"],
+)
+def rent(
+    booking_id=None,
+    customer_ssn=None,
+    hotel_id=None,
+    room_number=None,
+    price=None,
+    start_date=None,
+    end_date=None,
+):
+    cursor = db.cursor()
+    if booking_id is not None:
+        query = r"""SELECT bookings.hotel_id,
+                            bookings.room_number,
+                            bookings.start_date,
+                            bookings.end_date,
+                            rooms.price
+                    FROM bookings
+                    JOIN rooms
+                    ON bookings.hotel_id = rooms.hotel_id
+                        AND bookings.room_number = rooms.room_number
+                    WHERE bookings.booking_id = %s
+                """
+        cursor.execute(query, (booking_id,))
+        booking = cursor.fetchone()
+
+        customer_query = r"""SELECT customers.customer_id,
+                                    customers.ssn,
+                                    customers.registration_date,
+                                    customers.first_name,
+                                    customers.last_name
+                                FROM bookings
+                                JOIN customers
+                                ON bookings.customer_id = customers.customer_id
+                                WHERE bookings.booking_id = %s
+                            """
+        cursor.execute(customer_query, (booking_id,))
+        customer = cursor.fetchone()
+
+        paid_query = r"""SELECT rentals.paid_amount
+                            FROM rentals
+                            WHERE rentals.booking_id = %s
+                    """
+        cursor.execute(paid_query, (booking_id,))
+        paid = cursor.fetchone()
+        if paid is not None:
+            paid = paid[0]
+
+    if request.method == "GET":
+        if booking_id is not None:
+            return render_template(
+                "rent.html",
+                session=session,
+                booking_id=booking_id,
+                booking=booking,
+                customer=customer,
+                paid=paid,
+            )
+        else:
+            return render_template(
+                "rent.html",
+                session=session,
+                booking_id=None,
+                customer_ssn=customer_ssn,
+                hotel_id=hotel_id,
+                room_number=room_number,
+                price=price,
+                start_date=start_date,
+                end_date=end_date,
+            )
+    elif request.method == "POST":
+        if booking_id is not None:
+            try:
+                rent_query = r"""INSERT INTO rentals
+                                (customer_id, booking_id, hotel_id, room_number, start_date, end_date, paid_amount)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                                RETURNING rental_id
+                            """
+                cursor.execute(
+                    rent_query,
+                    (
+                        customer[0],
+                        booking_id,
+                        booking[0],
+                        booking[1],
+                        booking[2],
+                        booking[3],
+                        request.form.get("paid-amount"),
+                    ),
+                )
+                rental_id = cursor.fetchone()[0]
+                if rental_id is not None:
+                    flash("Successfully rented room", "success")
+                db.commit()
+                cursor.close()
+            except IntegrityError:
+                traceback.print_exc()
+                db.rollback()
+                flash("Unable to rent room", "danger")
+
+            return redirect(url_for("views.rent", booking_id=booking_id))
+        else:
+            new_rent_query = r"""INSERT INTO rentals
+                                (customer_id, hotel_id, room_number, start_date, end_date, paid_amount)
+                                VALUES (%s, %s, %s, %s, %s, %s)
+                                RETURNING rental_id
+                            """
+
+            customer_query = r"""SELECT customer_id FROM customers WHERE ssn = %s"""
+            cursor.execute(customer_query, (customer_ssn,))
+            customer_id = cursor.fetchone()[0]
+
+            cursor.execute(
+                new_rent_query,
+                (
+                    customer_id,
+                    hotel_id,
+                    room_number,
+                    start_date,
+                    end_date,
+                    request.form.get("paid-amount"),
+                ),
+            )
+            rental_id = cursor.fetchone()
+            if rental_id is not None:
+                flash("Successfully rented room", "success")
+            cursor.close()
+            db.commit()
+
+            return redirect(url_for("views.rent"))
+
+
+@views.route("/get-available-rooms/", methods=["GET"])
+def get_available_rooms():
+    cursor = db.cursor()
+
+    hotel_query = r"""SELECT hotel_id FROM employees WHERE employee_id = %s"""
+    cursor.execute(hotel_query, (session.get("user").get("id"),))
+    hotel_id = cursor.fetchone()
+    if hotel_id is not None:
+        hotel_id = hotel_id[0]
+
+    query = r"""SELECT chain_name,
+                        stars,
+                        num_rooms,
+                        country,
+                        province_or_state,
+                        city,
+                        address,
+                        room_number,
+                        capacity,
+                        description,
+                        price,
+                        hotel_id
+                FROM get_available_rooms(%s, %s)
+                WHERE hotel_id = %s
+            """
+    cursor.execute(
+        query,
+        (
+            date.fromisoformat(request.args.get("start-date")),
+            date.fromisoformat(request.args.get("end-date")),
+            hotel_id,
+        ),
+    )
+    rooms = cursor.fetchall()
+
+    return render_template(
+        "available_rooms.html",
+        session=session,
+        customer_ssn=request.args.get("customer-ssn"),
+        rooms=rooms,
+        hotel_id=hotel_id,
+        start_date=request.args.get("start-date"),
+        end_date=request.args.get("end-date"),
+    )
+
+
+@views.route("/rentals/")
+@views.route("/rentals/<int:rental_id>")
+def rentals(rental_id=None):
+    query = r"""SELECT rentals.rental_id,
+                        rentals.customer_id,
+                        rentals.booking_id,
+                        rentals.hotel_id,
+                        rentals.room_number,
+                        rentals.start_date,
+                        rentals.end_date,
+                        rentals.paid_amount
+                FROM rentals
+            """
+    cursor = db.cursor()
+    cursor.execute(query)
+    rentals = cursor.fetchall()
+
+    return render_template(
+        "rentals.html", session=session, rental_id=rental_id, rentals=rentals
+    )

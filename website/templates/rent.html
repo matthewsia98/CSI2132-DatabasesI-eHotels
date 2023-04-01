@@ -1,0 +1,221 @@
+{% extends "base.html" %} {% block title %}Rent{% endblock %} {% block content
+%}
+<br />
+{% if booking_id %} {% set hotel_id = booking[0] %} {% set room_number =
+booking[1] %} {% set start_date = booking[2] %} {% set end_date = booking[3] %}
+{% set price=booking[4] %}
+<div class="container text-center">
+  <h3>Booking ID</h3>
+  <h4><strong>{{ booking_id }}</strong></h4>
+</div>
+<br />
+<hr />
+<h3>Customer Details</h3>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Customer ID</th>
+      <th>SSN</th>
+      <th>Registration Date</th>
+      <th>First Name</th>
+      <th>Last Name</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>{{ customer[0] }}</td>
+      <td>{{ customer[1] }}</td>
+      <td>{{ customer[2] }}</td>
+      <td>{{ customer[3] }}</td>
+      <td>{{ customer[4] }}</td>
+    </tr>
+  </tbody>
+</table>
+<br />
+<hr />
+<h3>Booking Details</h3>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <td>Hotel ID</td>
+      <td>Room Number</td>
+      <td>Start Date</td>
+      <td>End Date</td>
+      <td>Price</td>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>{{ hotel_id }}</td>
+      <td>{{ room_number }}</td>
+      <td>{{ start_date }}</td>
+      <td>{{ end_date }}</td>
+      <td>{{ price }}</td>
+    </tr>
+  </tbody>
+</table>
+<br />
+<div
+  class="d-flex flex-columns justify-content-center align-items-center text-center"
+>
+  <form
+    action="{{ url_for('views.rent', booking_id=booking_id) }}"
+    method="post"
+  >
+    <div class="form-row">
+      <div class="form-group">
+        <label for="paid-amount">Paid Amount</label>
+        <input
+          type="text"
+          class="form-control text-center"
+          id="paid-amount"
+          name="paid-amount"
+          value="{{ paid }}"
+        />
+      </div>
+    </div>
+    <button class="btn btn-primary" type="submit">Confirm Payment</button>
+  </form>
+</div>
+{% else %} {% if hotel_id is none %}
+<form
+  id="available-rooms"
+  action="{{ url_for('views.get_available_rooms') }}"
+  method="get"
+>
+  <div class="form-row">
+    <div class="form-group col">
+      <label for="customer-ssn">Customer SSN</label>
+      <input
+        type="text"
+        class="form-control text-center"
+        id="customer-ssn"
+        name="customer-ssn"
+      />
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group col">
+      <label for="start-date">Start Date</label>
+      <input
+        type="date"
+        class="form-control text-center"
+        id="start-date"
+        name="start-date"
+      />
+    </div>
+    <div class="form-group col">
+      <label for="end-date">End Date</label>
+      <input
+        type="date"
+        class="form-control text-center"
+        id="end-date"
+        name="end-date"
+      />
+    </div>
+  </div>
+  <br />
+  <div class="container text-center">
+    <button form="available-rooms" type="submit" class="btn btn-primary">
+      Check Available Rooms
+    </button>
+  </div>
+</form>
+{% else %}
+<form
+  id="new-rent"
+  action="{{ url_for('views.rent', customer_ssn=customer_ssn, hotel_id=hotel_id, room_number=room_number, price=price, start_date=start_date, end_date=end_date) }}"
+  method="post"
+>
+  <div class="form-row">
+    <div class="form-group col">
+      <label for="customer-ssn">Customer SSN</label>
+      <input
+        type="text"
+        class="form-control text-center"
+        id="customer-ssn"
+        name="customer-ssn"
+        value="{{ customer_ssn }}"
+        disabled
+      />
+    </div>
+    <div class="form-group col">
+      <label for="hotel-id">Hotel ID</label>
+      <input
+        type="text"
+        id="hotel-id"
+        name="hotel-id"
+        class="form-control text-center"
+        value="{{ hotel_id }}"
+        disabled
+      />
+    </div>
+    <div class="form-group col">
+      <label for="room-number">Room Number</label>
+      <input
+        type="text"
+        id="room-number"
+        name="room-number"
+        class="form-control text-center"
+        value="{{ room_number }}"
+        disabled
+      />
+    </div>
+    <div class="form-group col">
+      <label for="price">Price</label>
+      <input
+        type="text"
+        id="price"
+        name="price"
+        class="form-control text-center"
+        value="{{ price }}"
+        disabled
+      />
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group col">
+      <label for="start-date">Start Date</label>
+      <input
+        type="date"
+        class="form-control text-center"
+        id="start-date"
+        name="start-date"
+        value="{{ start_date }}"
+        disabled
+      />
+    </div>
+    <div class="form-group col">
+      <label for="end-date">End Date</label>
+      <input
+        type="date"
+        class="form-control text-center"
+        id="end-date"
+        name="end-date"
+        value="{{ end_date }}"
+        disabled
+      />
+    </div>
+  </div>
+  <br />
+  <div class="d-flex text-center justify-content-center align-items-center">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="paid-amount">Paid Amount</label>
+        <input
+          type="text"
+          class="form-control text-center"
+          id="paid-amount"
+          name="paid-amount"
+          value="{{ paid }}"
+        />
+      </div>
+    </div>
+  </div>
+  <div class="container text-center">
+    <button form="new-rent" class="btn btn-primary" type="submit">
+      Confirm Payment
+    </button>
+  </div>
+</form>
+{% endif %} {% endif %} {% endblock %}

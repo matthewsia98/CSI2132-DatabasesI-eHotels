@@ -1,0 +1,90 @@
+{% extends "base.html" %} {% block title %}Bookings{% endblock %} {% block
+content %}
+<form id="search-name" action="/bookings" method="post">
+  <div class="form-row text-center">
+    <div class="form-group col">
+      <label for="first-name">First Name</label>
+      <input type="text" class="form-control text-center" id="first-name"
+      name="first-name" {% if form and form["first-name"] != "" %} value="{{
+      form["first-name"] }}" {% endif %} />
+    </div>
+    <div class="form-group col">
+      <label for="last-name">Last Name</label>
+      <input type="text" class="form-control text-center" id="last-name"
+      name="last-name" {% if form and form["last-name"] != "" %} value="{{
+      form["last-name"] }}" {% endif %} />
+    </div>
+    <div class="form-group col-1">
+      <label for="search" style="visibility: hidden">Search</label>
+      <button
+        form="search-name"
+        type="submit"
+        id="search"
+        class="form-control btn btn-light"
+      >
+        Search
+      </button>
+    </div>
+    <div class="form-group col-1">
+      <label for="clear" style="visibility: hidden">Clear</label>
+      <button
+        formaction="/bookings"
+        formmethod="get"
+        id="clear"
+        class="form-control btn btn-light"
+      >
+        Clear
+      </button>
+    </div>
+  </div>
+</form>
+<br />
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Chain Name</th>
+      <th>Hotel ID</th>
+      <th>Room Number</th>
+      <th>First Name</th>
+      <th>Last Name</th>
+      <th>Start Date</th>
+      <th>End Date</th>
+      <th>Booking ID</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for booking in bookings %} {% set booking_id = booking[-1] %} {% set
+    chain_name = booking[0] %} {% set hotel_id = booking[1] %} {% set
+    room_number = booking[2] %} {% set start_date = booking[3] %} {% set
+    end_date = booking[4] %} {% set first_name = booking[5] %} {% set last_name
+    = booking[6] %}
+    <tr>
+      <td>{{ chain_name }}</td>
+      <td>{{ hotel_id }}</td>
+      <td>{{ room_number }}</td>
+      <td>{{ first_name }}</td>
+      <td>{{ last_name }}</td>
+      <td>{{ start_date }}</td>
+      <td>{{ end_date }}</td>
+      <td>{{ booking_id }}</td>
+      <td>
+        <form
+          id="rent-{{ booking_id }}"
+          action="{{ url_for('views.rent', booking_id=booking_id) }}"
+          method="get"
+        >
+          <button
+            form="rent-{{ booking_id }}"
+            type="submit"
+            class="btn btn-primary"
+          >
+            Rent
+          </button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

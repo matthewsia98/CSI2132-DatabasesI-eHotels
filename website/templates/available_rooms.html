@@ -1,0 +1,48 @@
+{% extends "base.html" %} {% block title %}Rent{% endblock %} {% block content
+%}
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Chain</th>
+      <th>Hotel ID</th>
+      <th>Stars</th>
+      <th># Rooms</th>
+      <th>Country</th>
+      <th>Province/State</th>
+      <th>City</th>
+      <th>Address</th>
+      <th>Room No.</th>
+      <th>Capacity</th>
+      <th>View</th>
+      <th>Price</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for room in rooms %}
+    <tr>
+      <td>{{ room[0] }}</td>
+      <td>{{ room[-1] }}</td>
+      <td>{{ room[1] }}</td>
+      <td>{{ room[2] }}</td>
+      <td>{{ room[3] }}</td>
+      <td>{{ room[4] }}</td>
+      <td>{{ room[5] }}</td>
+      <td>{{ room[6] }}</td>
+      <td>{{ room[7] }}</td>
+      <td>{{ room[8] }}</td>
+      <td>{{ room[9] }}</td>
+      <td>{{ room[10] }}</td>
+      <td>
+        <form
+          action="{{ url_for('views.rent', customer_ssn=customer_ssn, hotel_id=room[11], room_number=room[7], price=room[10], start_date=start_date, end_date=end_date) }}"
+          method="get"
+        >
+          <button type="submit" class="btn btn-dark">Rent</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

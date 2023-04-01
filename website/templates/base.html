@@ -36,6 +36,14 @@
           <a class="nav-item nav-link" id="chains" href="/chains">Chains</a>
           <a class="nav-item nav-link" id="hotels" href="/hotels">Hotels</a>
           <a class="nav-item nav-link" id="rooms" href="/rooms">Rooms</a>
+          {% if session.get("user")is not none and
+          session.get("user").get("type") == "employee" %}
+          <a class="nav-item nav-link" id="bookings" href="/bookings"
+            >Bookings</a
+          >
+          <a class="nav-item nav-link" id="rentals" href="/rentals">Rentals</a>
+          <a class="nav-item nav-link" id="rent" href="/rent">Rent</a>
+          {% endif %}
           <a class="nav-item nav-link" id="login" href="/login">Login</a>
           <a class="nav-item nav-link" id="signUp" href="/sign-up">Sign Up</a>
         </div>
