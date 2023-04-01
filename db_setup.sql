@@ -57,8 +57,8 @@ CREATE TABLE IF NOT EXISTS hotels (
     country TEXT NOT NULL,
     zip TEXT NOT NULL,
     stars INTEGER,
-    num_rooms INTEGER,
-    chain_id INTEGER,
+    num_rooms INTEGER DEFAULT 0,
+    chain_id INTEGER NOT NULL,
     CHECK (stars BETWEEN 1 AND 5),
     FOREIGN KEY (chain_id) REFERENCES chains(chain_id) ON DELETE CASCADE
 );

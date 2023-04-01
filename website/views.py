@@ -333,6 +333,7 @@ def book_room(hotel_id=None, room_number=None):
         except RaiseException:
             flash("Room is already booked. Try different dates", "danger")
             db.rollback()
+            traceback.print_exc()
 
     cursor.close()
     return render_template(
@@ -475,8 +476,9 @@ def delete_chain(chain_id=None):
         db.commit()
         cursor.close()
     except IntegrityError:
-        db.rollback()
         flash("Cannot delete chain", "danger")
+        db.rollback()
+        traceback.print_exc()
 
     return redirect(url_for("views.chains"))
 
@@ -500,8 +502,9 @@ def edit_chain(chain_id=None):
                 flash("Successfully updated chain name", "success")
             db.commit()
         except IntegrityError:
-            db.rollback()
             flash("Unable to update chain", "danger")
+            db.rollback()
+            traceback.print_exc()
 
     chain_query = r"""SELECT chains.chain_id,
                             chains.chain_name
@@ -641,8 +644,9 @@ def edit_office(chain_id=None, office_id=None):
                 office_id = office_id[0]
                 flash("Successfully updated chain office address", "success")
         except IntegrityError:
-            db.rollback()
             flash("Unable to update chain office address", "danger")
+            db.rollback()
+            traceback.print_exc()
 
         return redirect(url_for("views.edit_chain", chain_id=chain_id))
 
@@ -659,8 +663,10 @@ def delete_phone(chain_id=None, phone_id=None):
         db.commit()
         cursor.close()
     except IntegrityError:
-        db.rollback()
         flash("Unable to delete chain phone number", "danger")
+        db.rollback()
+        traceback.print_exc()
+
     return redirect(url_for("views.edit_chain", chain_id=chain_id))
 
 
@@ -723,8 +729,9 @@ def edit_phone(chain_id=None, phone_id=None):
                 phone_id = phone_id[0]
                 flash("Successfully updated chain phone number", "success")
         except IntegrityError:
-            db.rollback()
             flash("Unable to update chain phone number", "danger")
+            db.rollback()
+            traceback.print_exc()
 
         return redirect(url_for("views.edit_chain", chain_id=chain_id))
 
@@ -741,8 +748,9 @@ def delete_email(chain_id=None, email_id=None):
         db.commit()
         cursor.close()
     except IntegrityError:
-        db.rollback()
         flash("Unable to delete chain email address", "danger")
+        db.rollback()
+        traceback.print_exc()
 
     return redirect(url_for("views.edit_chain", chain_id=chain_id))
 
@@ -805,8 +813,9 @@ def edit_email(chain_id=None, email_id=None):
                 email_id = email_id[0]
                 flash("Successfully updated chain email address", "success")
         except IntegrityError:
-            db.rollback()
             flash("Unable to update chain email address", "danger")
+            db.rollback()
+            traceback.print_exc()
 
         return redirect(url_for("views.edit_chain", chain_id=chain_id))
 
@@ -917,8 +926,9 @@ def edit_room_details(hotel_id=None, room_number=None):
             if room is not None:
                 flash("Successfully updated room details", "success")
         except IntegrityError:
-            db.rollback()
             flash("Unable to update room details", "danger")
+            db.rollback()
+            traceback.print_exc()
 
         return redirect(
             url_for("views.edit_room", hotel_id=hotel_id, room_number=room_number)
@@ -1043,8 +1053,9 @@ def edit_hotel_address(hotel_id=None):
                 hotel_id = hotel_id[0]
                 flash("Successfully updated hotel address", "success")
         except IntegrityError:
-            db.rollback()
             flash("Unable to update hotel address", "danger")
+            db.rollback()
+            traceback.print_exc()
 
         return redirect(url_for("views.edit_hotel", hotel_id=hotel_id))
 
@@ -1064,9 +1075,9 @@ def delete_hotel(hotel_id=None):
         db.commit()
         cursor.close()
     except IntegrityError:
-        traceback.print_exc()
-        db.rollback()
         flash("Unable to delete hotel", "danger")
+        db.rollback()
+        traceback.print_exc()
 
     return redirect(url_for("views.hotels"))
 
@@ -1087,9 +1098,9 @@ def delete_hotel_phone(hotel_id=None, phone_id=None):
         db.commit()
         cursor.close()
     except IntegrityError:
-        traceback.print_exc()
-        db.rollback()
         flash("Unable to delete hotel phone number", "danger")
+        db.rollback()
+        traceback.print_exc()
 
     return redirect(url_for("views.edit_hotel", hotel_id=hotel_id))
 
@@ -1109,9 +1120,9 @@ def delete_hotel_email(hotel_id=None, email_id=None):
         db.commit()
         cursor.close()
     except IntegrityError:
-        traceback.print_exc()
-        db.rollback()
         flash("Unable to delete hotel email address", "danger")
+        db.rollback()
+        traceback.print_exc()
 
     return redirect(url_for("views.edit_hotel", hotel_id=hotel_id))
 
@@ -1128,9 +1139,9 @@ def edit_hotel_stars(hotel_id=None):
         cursor.close()
         flash("Successfully updated hotel stars", "success")
     except IntegrityError:
-        traceback.print_exc()
-        db.rollback()
         flash("Unable to update hotel stars", "danger")
+        db.rollback()
+        traceback.print_exc()
 
     return redirect(url_for("views.edit_hotel", hotel_id=hotel_id))
 
@@ -1295,9 +1306,9 @@ def rent(
                 db.commit()
                 cursor.close()
             except IntegrityError:
-                traceback.print_exc()
-                db.rollback()
                 flash("Unable to rent room", "danger")
+                db.rollback()
+                traceback.print_exc()
 
             return redirect(url_for("views.rent", booking_id=booking_id))
         else:
@@ -1523,6 +1534,7 @@ def new_chain():
             except IntegrityError:
                 flash("Unable to add chain", "danger")
                 db.rollback()
+                traceback.print_exc()
 
     return render_template("new_chain.html", session=session)
 
@@ -1562,8 +1574,9 @@ def new_room():
             db.commit()
             cursor.close()
         except IntegrityError:
-            db.rollback()
             flash("Unable to add room", "danger")
+            db.rollback()
+            traceback.print_exc()
 
     return render_template("new_room.html", session=session, views=views)
 
@@ -1600,9 +1613,11 @@ def new_hotel():
             hotel_id = cursor.fetchone()
             if hotel_id is not None:
                 flash("Successfully added hotel", "success")
+            db.commit()
             cursor.close()
         except IntegrityError:
-            db.rollback()
             flash("Unable to add hotel", "danger")
+            db.rollback()
+            traceback.print_exc()
 
     return render_template("new_hotel.html", session=session, chains=chains)
