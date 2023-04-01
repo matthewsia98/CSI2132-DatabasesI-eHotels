@@ -108,14 +108,6 @@ def rooms(chain_id=None, hotel_id=None):
     capacities = cursor.fetchall()
     capacities = [capacity[0] for capacity in capacities]
 
-    cities_query = r"""SELECT DISTINCT city
-                        FROM hotels
-                        ORDER BY city
-                    """
-    cursor.execute(cities_query)
-    cities = cursor.fetchall()
-    cities = [city[0] for city in cities]
-
     chains_query = r"""SELECT DISTINCT chain_name
                         FROM chains
                         ORDER BY chain_name
@@ -141,6 +133,14 @@ def rooms(chain_id=None, hotel_id=None):
     provinces_or_states = [
         province_or_state[0] for province_or_state in provinces_or_states
     ]
+
+    cities_query = r"""SELECT DISTINCT city
+                        FROM hotels
+                        ORDER BY city
+                    """
+    cursor.execute(cities_query)
+    cities = cursor.fetchall()
+    cities = [city[0] for city in cities]
 
     stars_query = r"""SELECT DISTINCT stars
                         FROM hotels
