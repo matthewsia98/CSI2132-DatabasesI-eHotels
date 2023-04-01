@@ -2,9 +2,6 @@
 {% block title %}Login{% endblock %}
 {% block content %}
     {% if session.get("user") is none %}
-        {% if failed_login %}
-            <div class="alert alert-danger text-center" role="alert">Login failed. Please try again.</div>
-        {% endif %}
         <form class="text-center"
               action="{{ url_for('auth.login') }}"
               method="post">
