@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, session
+from flask import Blueprint, flash, render_template, request, session
 
 from . import db
 
@@ -11,7 +11,6 @@ def login():
         return render_template(
             "login.html",
             session=session,
-            failed_login=False,
         )
     elif request.method == "POST":
         customer_query = r"""SELECT customers.customer_id,
@@ -36,11 +35,7 @@ def login():
 
         user = cursor.fetchone()
         if user is None:
-            return render_template(
-                "login.html",
-                session=session,
-                failed_login=True,
-            )
+            flash("Invalid SSN", "danger")
         else:
             session["user"] = {
                 "type": request.form.get("customer-or-employee-radio"),
@@ -48,10 +43,10 @@ def login():
                 "first_name": user[1],
                 "last_name": user[2],
             }
-            return render_template(
-                "login.html",
-                session=session,
-            )
+        return render_template(
+            "login.html",
+            session=session,
+        )
 
 
 @auth.route("/logout")
