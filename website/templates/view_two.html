@@ -1,0 +1,68 @@
+{% extends "base.html" %} {% block title %}Rent{% endblock %} {% block content
+%}
+<br />
+<h2 class="text-center">Capacity of all rooms</h2>
+<br />
+<div class="d-flex justify-content-center align-items-center text-center">
+  <form action="{{ url_for('views.view_two') }}" method="post">
+    <div class="form-row">
+      <div class="form-group col">
+        <label for="hotel-id">Hotel ID</label>
+        <input
+          type="text"
+          class="form-control"
+          id="hotel-id"
+          name="hotel-id"
+          placeholder="Hotel ID"
+        />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group col">
+        <label for="search" style="visibility: hidden">Search</label>
+        <button type="submit" id="search" class="form-control btn btn-light">
+          Search
+        </button>
+      </div>
+      <div class="form-group col">
+        <label for="clear" style="visibility: hidden">Clear</label>
+        <button
+          formaction="/view-two"
+          formmethod="get"
+          id="search"
+          class="form-control btn btn-light"
+        >
+          Clear
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+<br />
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Chain Name</th>
+      <th>Hotel ID</th>
+      <th>Country</th>
+      <th>Province/State</th>
+      <th>City</th>
+      <th>Room Number</th>
+      <th>Capacity</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for capacity in capacities %}
+    <tr>
+      <td>{{ capacity[0] }}</td>
+      <td>{{ capacity[1] }}</td>
+      <td>{{ capacity[2] }}</td>
+      <td>{{ capacity[3] }}</td>
+      <td>{{ capacity[4] }}</td>
+      <td>{{ capacity[5] }}</td>
+      <td>{{ capacity[6] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

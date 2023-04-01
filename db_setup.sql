@@ -427,6 +427,17 @@ CREATE OR REPLACE FUNCTION get_available_rooms(start_date date, end_date date) R
 $get_available_rooms$ LANGUAGE plpgsql;
 
 
+-- Create indexes
+CREATE INDEX idx_bookings_start_date
+ON bookings(start_date);
+
+CREATE INDEX idx_bookings_end_date
+ON bookings(end_date);
+
+CREATE INDEX idx_room_price
+ON rooms(price);
+
+
 -- Insert into `chains` table
 INSERT INTO chains(chain_name) VALUES
     ('Hotel Chain 1'),

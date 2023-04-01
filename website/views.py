@@ -1392,6 +1392,46 @@ def rentals(rental_id=None):
     cursor.execute(query)
     rentals = cursor.fetchall()
 
+    cursor.close()
     return render_template(
         "rentals.html", session=session, rental_id=rental_id, rentals=rentals
     )
+
+
+@views.route("/view-one")
+def view_one():
+    query = r"""SELECT country,
+                        province_or_state,
+                        city,
+                        num_available_rooms
+                FROM available_rooms_per_area
+            """
+    cursor = db.cursor()
+    cursor.execute(query)
+    rooms = cursor.fetchall()
+    cursor.close()
+
+    return render_template("view_one.html", rooms=rooms)
+
+
+@views.route("/view-two/", methods=["GET", "POST"])
+def view_two(hotel_id=None):
+    query = r"""SELECT chain_name,
+                        hotel_id,
+                        country,
+                        province_or_state,
+                        city,
+                        room_number,
+                        capacity
+                FROM room_capacities
+            """
+    cursor = db.cursor()
+    if request.method == "GET":
+        cursor.execute(query)
+        capacities = cursor.fetchall()
+    elif request.method == "POST":
+        cursor.execute(query + " WHERE hotel_id = %s", (request.form.get("hotel-id"),))
+        capacities = cursor.fetchall()
+
+    cursor.close()
+    return render_template("view_two.html", capacities=capacities)

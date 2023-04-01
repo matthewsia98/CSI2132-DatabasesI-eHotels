@@ -1,0 +1,26 @@
+{% extends "base.html" %} {% block title %}Rent{% endblock %} {% block content
+%}
+<br />
+<h2 class="text-center">Number of available rooms per area</h2>
+<br />
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <td>Country</td>
+      <td>Province/State</td>
+      <td>City</td>
+      <td>Available Rooms</td>
+    </tr>
+  </thead>
+  <tbody>
+    {% for room in rooms %}
+    <tr>
+      <td>{{ room[0] }}</td>
+      <td>{{ room[1] }}</td>
+      <td>{{ room[2] }}</td>
+      <td>{{ room[3] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
