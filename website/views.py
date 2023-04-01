@@ -179,32 +179,50 @@ def rooms(chain_id=None, hotel_id=None):
                 ON rooms.view_type = view_types.id
             """
     if request.method == "POST":
-        cursor.execute(
-            query
-            + "WHERE 1=1"
-            + (" AND chains.chain_name = %s" if request.form.get("chain") != "" else "")
-            + (" AND hotels.stars >= %s" if request.form.get("stars") != "" else "")
-            + (
-                " AND hotels.num_rooms >= %s"
-                if request.form.get("num-rooms") != ""
-                else ""
+        if request.form.get("start-date") != "" and request.form.get("end-date") != "":
+            cursor.execute(
+                "SELECT * FROM get_available_rooms(%s, %s)",
+                (request.form.get("start-date"), request.form.get("end-date")),
             )
-            + (" AND hotels.country = %s" if request.form.get("country") != "" else "")
-            + (
-                " AND hotels.province_or_state = %s"
-                if request.form.get("province-or-state") != ""
-                else ""
+        else:
+            cursor.execute(
+                query
+                + "WHERE 1=1"
+                + (
+                    " AND chains.chain_name = %s"
+                    if request.form.get("chain") != ""
+                    else ""
+                )
+                + (" AND hotels.stars >= %s" if request.form.get("stars") != "" else "")
+                + (
+                    " AND hotels.num_rooms >= %s"
+                    if request.form.get("num-rooms") != ""
+                    else ""
+                )
+                + (
+                    " AND hotels.country = %s"
+                    if request.form.get("country") != ""
+                    else ""
+                )
+                + (
+                    " AND hotels.province_or_state = %s"
+                    if request.form.get("province-or-state") != ""
+                    else ""
+                )
+                + (" AND hotels.city = %s" if request.form.get("city") != "" else "")
+                + (
+                    " AND rooms.capacity = %s"
+                    if request.form.get("capacity") != ""
+                    else ""
+                )
+                + (" AND rooms.price <= %s" if request.form.get("price") != "" else "")
+                + " ORDER BY hotels.chain_id, rooms.hotel_id, rooms.room_number",
+                tuple(
+                    request.form.get(key)
+                    for key in request.form
+                    if request.form.get(key) != ""
+                ),
             )
-            + (" AND hotels.city = %s" if request.form.get("city") != "" else "")
-            + (" AND rooms.capacity = %s" if request.form.get("capacity") != "" else "")
-            + (" AND rooms.price <= %s" if request.form.get("price") != "" else "")
-            + " ORDER BY hotels.chain_id, rooms.hotel_id, rooms.room_number",
-            tuple(
-                request.form.get(key)
-                for key in request.form
-                if request.form.get(key) != ""
-            ),
-        )
         rooms = cursor.fetchall()
         return render_template(
             "rooms.html",
@@ -309,7 +327,7 @@ def book_room(hotel_id=None, room_number=None):
                 booking = cursor.fetchone()
                 db.commit()
         except RaiseException:
-            flash("Room is already booked", "danger")
+            flash("Room is already booked. Try different dates", "danger")
             db.rollback()
 
     cursor.close()
