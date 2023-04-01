@@ -395,8 +395,8 @@ def edit_user():
                             """
             cursor.execute(employee_query, (session.get("user").get("id"),))
             user = cursor.fetchone()
-            cursor.close()
-            return render_template("edit_user.html", session=session, user=user)
+        cursor.close()
+        return render_template("edit_user.html", session=session, user=user)
     elif request.method == "POST":
         query = (
             (
